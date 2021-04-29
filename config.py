@@ -1,0 +1,12 @@
+# Created by Patrick Kao
+from params_proto.neo_proto import PrefixProto
+
+from data.lrs3 import LRS3WholeDataSet
+
+
+class Config(PrefixProto):
+    dataset_dir = "/media/dolphonie/Datasets/lrs3"
+    batch_size = 4
+    serialize_dataset_path = "datasets.dill"
+    lr = 1e-3
+    dataset_class = LRS3WholeDataSet
