@@ -5,7 +5,7 @@ from data.lrs3 import LRS3WholeDataSet
 
 
 class Config(PrefixProto):
-    dataset_dir = "/media/dolphonie/Datasets/lrs3"
+    dataset_dir = "dataset_dir/lrs3"
     batch_size = 4
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3

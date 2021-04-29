@@ -132,3 +132,4 @@ dmypy.json
 .idea
 *.dill
 lightning_logs
+dataset_dir
