@@ -42,8 +42,10 @@ class LRS3WholeDataSet(Dataset):
 
 
 class LRS3LazyDataSet(Dataset):
-    def __init__(self, dataset_directory: str, transform=None, start_str="Text:  "):
-        self.data_list = loader_utils.crawl_directory_one_nest(dataset_directory)
+    def __init__(self, dataset_directory: str, transform=None, start_str="Text:  ",
+                 load_file_list=None):
+        self.data_list = load_file_list if load_file_list is not None else \
+            loader_utils.crawl_directory_one_nest(dataset_directory)
         self.transform = transform
         self.start_str = start_str
 
@@ -51,8 +53,10 @@ class LRS3LazyDataSet(Dataset):
         return len(self.data_list)
 
     def __getitem__(self, item):
+        start = datetime.datetime.now()
         file_path = self.data_list[item]
         frames, text = get_frame_text(file_path, self.start_str, self.transform)
+        print(f"Retrieval time: {datetime.datetime.now() - start}")
         return {"frames": frames, "text": text}
 
 
@@ -66,20 +70,30 @@ class LRS3DataModule(LightningDataModule):
 
         load_filename = self.config.serialize_dataset_path
         if os.path.isfile(load_filename):
-            [self.train_dataset, self.val_dataset, self.test_dataset] = dill.load(
+            [train_list, val_list, test_list] = dill.load(
                 open(load_filename, 'rb'))
+            self.train_dataset = self.config.dataset_class(
+                load_file_list=train_list)
+            self.val_dataset = self.config.dataset_class(
+                load_file_list=val_list)
+            self.test_dataset = self.config.dataset_class(
+                load_file_list=test_list)
         else:
             print("Serializing data.")
-            self.train_dataset = None  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
+            self.train_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "test"))  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
             # "pretrain"))
-            self.val_dataset = None  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
+            self.val_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "test"))  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
             # "trainval"))
             start = datetime.datetime.now()
-            self.test_dataset = self.config.dataset_class(dataset_directory=os.path.join(data_dir, "test"))
+            self.test_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "test"))
             print(datetime.datetime.now() - start)
 
             Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
-            dill.dump([self.train_dataset, self.val_dataset, self.test_dataset],
+            dill.dump([self.train_dataset.data_list, self.val_dataset.data_list,
+                       self.test_dataset.data_list],
                       open(load_filename, mode='wb'))
 
     def train_dataloader(self) -> Any:
