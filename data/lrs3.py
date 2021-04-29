@@ -14,31 +14,35 @@ from data.loader_utils import collate_batch, get_frame_text
 
 
 class LRS3WholeDataSet(Dataset):
-    def __init__(self, dataset_directory: str, transform=None, start_str="Text:  "):
-        self.frames = []
-        self.texts = []
+    def __init__(self, dataset_directory: str, transform=None, start_str="Text:  ",
+                 load_file_list=None):
 
         self.dataset_directory = dataset_directory
         self.transform = transform
         self.start_str = start_str
 
-        self.populate_data()
+        self.data_list = load_file_list if load_file_list is not None else self.populate_data()
 
     def __len__(self):
-        return len(self.frames)
+        return len(self.data_list[0])
 
     def __getitem__(self, idx):
-        return {"frames": self.frames[idx], "text": self.texts[idx]}
+        return {"frames": self.data_list[0][idx], "text": self.data_list[1][idx]}
 
     def populate_data(self):
+        frames_list = []
+        texts_list = []
         for (dirpath, dirnames, filenames) in os.walk(self.dataset_directory):
             for filename in filenames:
                 if filename.endswith('.txt'):
                     base_local = filename.replace(".txt", "")
                     base_path = os.sep.join([dirpath, base_local])
                     frames, text = get_frame_text(base_path, self.start_str, self.transform)
-                    self.frames.append(frames)
-                    self.texts.append(text)
+                    frames_list.append(frames)
+                    texts_list.append(text)
+
+        data_list = [frames_list, texts_list]
+        return data_list
 
 
 class LRS3LazyDataSet(Dataset):
@@ -81,10 +85,14 @@ class LRS3DataModule(LightningDataModule):
         else:
             print("Serializing data.")
             self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "test"))  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
+                dataset_directory=os.path.join(data_dir,
+                                               "test"))  # LRS3DataSet(
+            # dataset_directory=os.path.join(data_dir,
             # "pretrain"))
             self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "test"))  # LRS3DataSet(dataset_directory=os.path.join(data_dir,
+                dataset_directory=os.path.join(data_dir,
+                                               "test"))  # LRS3DataSet(
+            # dataset_directory=os.path.join(data_dir,
             # "trainval"))
             start = datetime.datetime.now()
             self.test_dataset = self.config.dataset_class(

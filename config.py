@@ -10,3 +10,8 @@ class Config(PrefixProto):
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
     dataset_class = LRS3LazyDataSet
+
+
+    # model params
+    encoder_layers = 6
+    decoder_layers = 6
