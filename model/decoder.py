@@ -94,4 +94,4 @@ class Decoder(nn.Module):
         embed_matrix = self.word_embedding.weight.data.detach()  # shape: vocab x embed_dim
         logits = embedding_to_logits(decoder_outputs, embed_matrix)
 
-        return logits
+        return logits, input_ids

@@ -55,6 +55,6 @@ def collate_batch(batch):
     text = [el["text"] for el in batch]
     lengths = [el.shape[0] for el in frames]
     padded_frames = torch.nn.utils.rnn.pad_sequence(frames, batch_first=True)
-    return padded_frames, text, lengths
+    return padded_frames, lengths, text
 
 

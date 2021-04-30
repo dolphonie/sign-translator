@@ -1,13 +1,9 @@
 # Created by Patrick Kao
-import os
+import pytorch_lightning as pl
 import torch
 from torch import nn
-import torch.nn.functional as F
-from torchvision import transforms
-from torchvision.datasets import MNIST
-from torch.utils.data import DataLoader, random_split
-import pytorch_lightning as pl
 
+from model.decoder import Decoder
 from model.encoder import Encoder
 from model.pretrain_videocnn import get_pretrained_cnn
 
@@ -19,15 +15,24 @@ class SignTranslator(pl.LightningModule):
         self.video_encoder = get_pretrained_cnn()
         self.encoder = Encoder(config)
         self.decoder = Decoder(config)
-        self.linear = nn.Linear(5,5)
-
+        self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, x):
-        frames, labels, lengths = x
+        frames, lengths, labels = x
+        frame_embed = self.video_encoder(frames)
+        encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
+                                                       lengths=lengths)
+        output_logits, labels_tokenized = self.decoder(encoder_output=encoder_output,
+                                                       encoder_padding=encoder_padding,
+                                                       target_sequence=labels)
 
+        shift_logits = output_logits[:-1].permute(1, 0, 2).contiguous()
+        shift_labels = labels_tokenized[1:].permute(1, 0, 2).contiguous()
+        # Flatten the tokens
+        loss = self.loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        return loss
 
     def training_step(self, batch, batch_idx):
-
         pass
 
     def configure_optimizers(self):
