@@ -15,3 +15,5 @@ class Config(PrefixProto):
     # model params
     encoder_layers = 6
     decoder_layers = 6
+    teacher_forcing_probability=0.8
+    frame_embed_dim=1

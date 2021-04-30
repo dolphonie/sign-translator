@@ -80,6 +80,9 @@ class LanguageModel(nn.Module):
 
         return tokens["input_ids"], tokens["attention_mask"]
 
+    def token_embedding_layer(self) -> nn.Embedding:
+        return self.model.wte
+
     def token_embedding(self) -> torch.Tensor:
         """
         Returns the token embedding tensor of shape (vocab_size, hidden_size).
