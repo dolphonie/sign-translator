@@ -9,5 +9,5 @@ from model.sign_translator import SignTranslator
 data = LRS3DataModule(Config)
 model = SignTranslator(Config)
 
-trainer = Trainer(gpus=-1, fast_dev_run=True)
+trainer = Trainer(**Config.trainer_params)
 trainer.fit(model, data)
