@@ -84,20 +84,14 @@ class LRS3DataModule(LightningDataModule):
                 load_file_list=test_list)
         else:
             print("Serializing data.")
-            self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir,
-                                               "test"))  # LRS3DataSet(
-            # dataset_directory=os.path.join(data_dir,
-            # "pretrain"))
-            self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir,
-                                               "test"))  # LRS3DataSet(
-            # dataset_directory=os.path.join(data_dir,
-            # "trainval"))
             start = datetime.datetime.now()
+            self.train_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "pretrain"))
+            self.val_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "trainval"))
             self.test_dataset = self.config.dataset_class(
                 dataset_directory=os.path.join(data_dir, "test"))
-            print(datetime.datetime.now() - start)
+            print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
             Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
             dill.dump([self.train_dataset.data_list, self.val_dataset.data_list,
