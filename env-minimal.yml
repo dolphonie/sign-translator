@@ -1,0 +1,23 @@
+name: sign
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - torchaudio
+  - torchvision
+  - cudatoolkit=10.1
+  - pytorch
+  - transformers
+  - pytorch-lightning
+  - dill
+  - av
+  - importlib-metadata
+  - pip:
+      - argcomplete
+      - argparse
+      - params-proto
+      - typing
+      - waterbear
+prefix: /home/dolphonie/anaconda3/envs/sign
