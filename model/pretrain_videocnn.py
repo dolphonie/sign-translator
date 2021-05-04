@@ -43,7 +43,7 @@ def transform_frames_for_pretrain(frames):
     :return:
     """
     gray = transforms.Grayscale()
-    to_ret = frames.permute(0, 1, 4, 2, 3).type(torch.float)/255  # want batch x time x channels x h x w
-    to_ret = gray(to_ret)
+    frames = frames.permute(0, 1, 4, 2, 3).type(torch.float)/255  # want batch x time x channels x h x w
+    frames = gray(frames)
 
-    return to_ret
+    return frames
