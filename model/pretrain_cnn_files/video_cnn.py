@@ -137,6 +137,7 @@ class VideoCNN(nn.Module):
     
     def visual_frontend_forward(self, x):
         x = x.transpose(1, 2)
+        x = x.contiguous()
         x = self.frontend3D(x)
         x = x.transpose(1, 2)
         x = x.contiguous()
