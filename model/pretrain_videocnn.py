@@ -26,7 +26,7 @@ def load_missing(model, pretrained_dict):
     return model
 
 
-def get_pretrained_cnn(weights_path="pretrain_cnn_files/lrw-cosine-lr-acc-0.85080.pt"):
+def get_pretrained_cnn(weights_path="../pretrain_models/lrw-cosine-lr-acc-0.85080.pt"):
     file_dir = os.path.dirname(os.path.realpath(__file__))
     weights_path_adjusted = os.path.join(file_dir, weights_path)
     video_model = VideoModel(PretrainedArgs)

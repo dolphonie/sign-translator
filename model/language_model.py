@@ -11,6 +11,7 @@ attention)
 """
 
 # Imports
+import os
 from typing import List, Tuple, Union
 
 import torch
@@ -19,15 +20,22 @@ from transformers import GPT2Tokenizer, GPT2Model
 
 
 class LanguageModel(nn.Module):
-    def __init__(self, pretrained: str = "gpt2"):
+    def __init__(self, pretrained: str = None,
+                 model_dir: str = "../pretrain_models/gpt2_model",
+                 tokenizer_dir: str = "../pretrain_models/gpt2_tokenizer"):
         """
         :param pretrained: name of the pretrained model, from ("gpt2", "gpt2-medium",
         "gpt2-large", "gpt2-xl")
         """
         super(LanguageModel, self).__init__()
-        self.tokenizer = GPT2Tokenizer.from_pretrained(pretrained)
+        script_dir = os.path.dirname(os.path.realpath(__file__))
+        tokenizer_pretrained = pretrained if pretrained is not None else os.path.join(script_dir,
+                                                                                      tokenizer_dir)
+        self.tokenizer = GPT2Tokenizer.from_pretrained(tokenizer_pretrained)
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = GPT2Model.from_pretrained(pretrained)
+        model_pretrained = pretrained if pretrained is not None else os.path.join(script_dir,
+                                                                                  model_dir)
+        self.model = GPT2Model.from_pretrained(model_pretrained)
 
     def forward(self,
                 input_ids: torch.LongTensor,
