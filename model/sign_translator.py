@@ -49,6 +49,7 @@ class SignTranslator(pl.LightningModule):
         labels_contig = labels_tokenized.contiguous()
         # Flatten the tokens
         loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
+        self.log("train_loss", loss)
         return loss
 
     def configure_optimizers(self):
