@@ -68,6 +68,7 @@ class LRS3DataModule(LightningDataModule):
     def __init__(self, config: PrefixProto.__class__):
         super().__init__()
         self.config = config
+        self.batch_size = config.batch_size
 
     def setup(self, stage: Optional[str] = None):
         data_dir = self.config.dataset_dir
@@ -99,11 +100,11 @@ class LRS3DataModule(LightningDataModule):
                       open(load_filename, mode='wb'))
 
     def train_dataloader(self) -> Any:
-        return DataLoader(self.train_dataset, batch_size=self.config.batch_size,
+        return DataLoader(self.train_dataset, batch_size=self.batch_size,
                           collate_fn=collate_batch)
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.val_dataset, batch_size=self.config.batch_size)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size)
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.test_dataset, batch_size=self.config.batch_size)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size)

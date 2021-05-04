@@ -133,3 +133,4 @@ dmypy.json
 *.dill
 lightning_logs
 dataset_dir
+*.ckpt
