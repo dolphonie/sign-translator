@@ -7,7 +7,7 @@ from data.lrs3 import LRS3LazyDataSet
 
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
-    batch_size = 4
+    batch_size = 2
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
     dataset_class = LRS3LazyDataSet
