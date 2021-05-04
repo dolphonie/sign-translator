@@ -145,6 +145,11 @@ class VideoCNN(nn.Module):
         return x        
     
     def forward(self, x):
+        """
+
+        :param x: shape batcn x time x
+        :return:
+        """
         b, t = x.size()[:2]
 
         x = self.visual_frontend_forward(x)

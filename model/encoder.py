@@ -1,4 +1,5 @@
 # Created by Patrick Kao
+import torch
 from torch import nn
 
 from model.transformer_utils import generate_padding_mask, PositionalEncoding
@@ -19,8 +20,7 @@ class Encoder(nn.Module):
         :param lengths:
         :return:
         """
-        padding_mask = generate_padding_mask(frame_embeddings, lengths)
-
+        padding_mask = generate_padding_mask(frame_embeddings, lengths).to(frame_embeddings.device)
         # transformer_encoder wants batch second
         encoder_input = frame_embeddings.permute(1, 0, 2)
         encoder_input = self.pos_embed(encoder_input)

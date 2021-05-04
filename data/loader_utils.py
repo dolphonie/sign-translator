@@ -31,13 +31,15 @@ def crawl_directory_one_nest(directory):
 
     return list_of_files
 
-def get_frame_text(base_path, start_str, transform = None):
+
+def get_frame_text(base_path, start_str, transform=None):
     video_path = f"{base_path}.mp4"
     text_path = f"{base_path}.txt"
     frames = read_video(video_path)
     if transform:
         frames = transform(frames)
 
+    frames = frames[0]  # discard audio
     with open(text_path, "r") as file:
         raw_text = file.readlines()
 
@@ -50,11 +52,10 @@ def get_frame_text(base_path, start_str, transform = None):
     assert text is not None, "File read failed"
     return frames, text
 
+
 def collate_batch(batch):
-    frames = [el["frames"][0] for el in batch]
+    frames = [el["frames"] for el in batch]
     text = [el["text"] for el in batch]
     lengths = [el.shape[0] for el in frames]
     padded_frames = torch.nn.utils.rnn.pad_sequence(frames, batch_first=True)
     return padded_frames, lengths, text
-
-

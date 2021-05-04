@@ -46,8 +46,10 @@ class LRS3WholeDataSet(Dataset):
 
 
 class LRS3LazyDataSet(Dataset):
-    def __init__(self, dataset_directory: str, transform=None, start_str="Text:  ",
+    def __init__(self, dataset_directory: str = None, transform=None, start_str="Text:  ",
                  load_file_list=None):
+        assert (dataset_directory and (not load_file_list)) or (
+                (not dataset_directory) and load_file_list)
         self.data_list = load_file_list if load_file_list is not None else \
             loader_utils.crawl_directory_one_nest(dataset_directory)
         self.transform = transform

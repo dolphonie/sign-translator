@@ -2,6 +2,7 @@
 import os
 
 import torch
+from torchvision import transforms
 
 from model.pretrain_cnn_files.model import VideoModel
 
@@ -25,7 +26,7 @@ def load_missing(model, pretrained_dict):
     return model
 
 
-def get_pretrained_cnn(weights_path="pretrain_cnn_files/lrw-cosine-lr-acc-0.85080"):
+def get_pretrained_cnn(weights_path="pretrain_cnn_files/lrw-cosine-lr-acc-0.85080.pt"):
     file_dir = os.path.dirname(os.path.realpath(__file__))
     weights_path_adjusted = os.path.join(file_dir, weights_path)
     video_model = VideoModel(PretrainedArgs)
@@ -33,3 +34,16 @@ def get_pretrained_cnn(weights_path="pretrain_cnn_files/lrw-cosine-lr-acc-0.8508
     weight = torch.load(weights_path_adjusted, map_location=torch.device('cpu'))
     load_missing(video_model, weight.get('video_model'))
     return video_model.video_cnn
+
+
+def transform_frames_for_pretrain(frames):
+    """
+
+    :param frames: batch x time x h x w x 3
+    :return:
+    """
+    gray = transforms.Grayscale()
+    to_ret = frames.permute(0, 1, 4, 2, 3).type(torch.float)/255  # want batch x time x channels x h x w
+    to_ret = gray(to_ret)
+
+    return to_ret

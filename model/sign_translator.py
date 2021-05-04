@@ -1,11 +1,14 @@
 # Created by Patrick Kao
+
+from typing import List
+
 import pytorch_lightning as pl
 import torch
-from torch import nn
+from torch import nn, Tensor
 
 from model.decoder import Decoder
 from model.encoder import Encoder
-from model.pretrain_videocnn import get_pretrained_cnn
+from model.pretrain_videocnn import get_pretrained_cnn, transform_frames_for_pretrain
 
 
 class SignTranslator(pl.LightningModule):
@@ -17,23 +20,36 @@ class SignTranslator(pl.LightningModule):
         self.decoder = Decoder(config)
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, x):
-        frames, lengths, labels = x
-        frame_embed = self.video_encoder(frames)
+    def forward(self, frames: Tensor, lengths: List[int], labels: List[str]):
+        """
+
+        :param frames: batch x time x channels x height x width
+        :param lengths: length batch
+        :param labels: length batch
+        :return:
+        """
+        frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
         output_logits, labels_tokenized = self.decoder(encoder_output=encoder_output,
                                                        encoder_padding=encoder_padding,
                                                        target_sequence=labels)
-
-        shift_logits = output_logits[:-1].permute(1, 0, 2).contiguous()
-        shift_labels = labels_tokenized[1:].permute(1, 0, 2).contiguous()
-        # Flatten the tokens
-        loss = self.loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-        return loss
+        return output_logits, labels_tokenized
 
     def training_step(self, batch, batch_idx):
-        pass
+        frames, lengths, labels = batch
+
+        frames_tr = transform_frames_for_pretrain(frames)
+        output_logits, labels_tokenized = self.forward(frames=frames_tr,
+                                                       lengths=lengths,
+                                                       labels=labels, )
+        # no need to shift as in GPT2 objective, since each logit corresponds to the prediction
+        # for the corresponding word
+        logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
+        labels_contig = labels_tokenized.contiguous()
+        # Flatten the tokens
+        loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
+        return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), self.config.lr)
