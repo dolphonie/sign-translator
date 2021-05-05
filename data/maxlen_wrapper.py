@@ -12,6 +12,7 @@ class MaxLenWrapper(Dataset):
         self.max_len = max_len
         print(f"Filtering data points longer than {max_len}")
         self.filtered_indices = self._get_filtered_indices()
+        print(f"Filtered {self.__len__()/len(self.dataset)} proportion of points")
 
     def __len__(self):
         return len(self.filtered_indices)

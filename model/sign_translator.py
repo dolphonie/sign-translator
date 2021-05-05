@@ -38,8 +38,6 @@ class SignTranslator(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         frames, lengths, labels = batch
-        print(lengths)
-        print(frames.shape)
         frames_tr = transform_frames_for_pretrain(frames)
         output_logits, labels_tokenized = self.forward(frames=frames_tr,
                                                        lengths=lengths,

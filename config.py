@@ -10,6 +10,9 @@ class Config(PrefixProto):
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
+
+    # data
+    max_len = 120
     dataset_class = LRS3LazyDataSet
 
     trainer_params = {
