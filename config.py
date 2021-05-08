@@ -2,7 +2,7 @@
 import torch.cuda
 from params_proto.neo_proto import PrefixProto
 
-from data.lrs3 import LRS3LazyDataSet
+from data.lrs3 import LRS3LazyDataSet, LRS3WholeDataSet
 from data.maxlen_wrapper import MaxLenWrapper
 
 
@@ -13,11 +13,11 @@ def wrapper_func(dataset):
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
     batch_size = 1
-    serialize_dataset_path = "datasets.dill"
+    serialize_dataset_path = "whole_datasets.dill"
     lr = 1e-3
 
     # data
-    dataset_class = LRS3LazyDataSet
+    dataset_class = LRS3WholeDataSet
     wrapper_func = lambda x: x
 
     trainer_params = {
