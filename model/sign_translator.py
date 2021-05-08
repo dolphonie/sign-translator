@@ -28,7 +28,8 @@ class SignTranslator(pl.LightningModule):
         :param labels: length batch
         :return:
         """
-        frames = frames[:,:10]
+        frames = frames[:, :4]
+        labels[0] = " ".join(labels[0].split(" ")[:2])
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
