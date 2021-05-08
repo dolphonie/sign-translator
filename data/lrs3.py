@@ -11,7 +11,6 @@ from torch.utils.data import DataLoader, Dataset
 
 from data import loader_utils
 from data.loader_utils import collate_batch, get_frame_text
-from data.maxlen_wrapper import MaxLenWrapper
 
 
 class LRS3WholeDataSet(Dataset):
@@ -78,27 +77,29 @@ class LRS3DataModule(LightningDataModule):
         if os.path.isfile(load_filename):
             [train_list, val_list, test_list] = dill.load(
                 open(load_filename, 'rb'))
-            self.train_dataset = MaxLenWrapper(self.config.dataset_class(
-                load_file_list=train_list), max_len=self.config.max_len)
-            self.val_dataset = MaxLenWrapper(self.config.dataset_class(
-                load_file_list=val_list), max_len=self.config.max_len)
-            self.test_dataset = MaxLenWrapper(self.config.dataset_class(
-                load_file_list=test_list), max_len=self.config.max_len)
+            self.train_dataset = self.config.dataset_class(load_file_list=train_list)
+            self.val_dataset = self.config.dataset_class(load_file_list=val_list)
+            self.test_dataset = self.config.dataset_class(load_file_list=test_list)
         else:
             print("Serializing data.")
             start = datetime.datetime.now()
-            self.train_dataset = MaxLenWrapper(self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "pretrain")), max_len=self.config.max_len)
-            self.val_dataset = MaxLenWrapper(self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "trainval")), max_len=self.config.max_len)
-            self.test_dataset = MaxLenWrapper(self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "test")), max_len=self.config.max_len)
+            self.train_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "pretrain"))
+            self.val_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "trainval"))
+            self.test_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, "test"))
             print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
             Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
             dill.dump([self.train_dataset.data_list, self.val_dataset.data_list,
                        self.test_dataset.data_list],
                       open(load_filename, mode='wb'))
+
+        # apply wrappers
+        self.train_dataset = self.config.wrapper_func(self.train_dataset)
+        self.val_dataset = self.config.wrapper_func(self.val_dataset)
+        self.test_dataset = self.config.wrapper_func(self.test_dataset)
 
     def train_dataloader(self) -> Any:
         return DataLoader(self.train_dataset, batch_size=self.batch_size,
