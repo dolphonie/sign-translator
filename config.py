@@ -12,6 +12,10 @@ def wrapper_func(dataset):
 
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
+    train_dir = "pretrain"
+    val_dir = "trainval"
+    test_dir = "test"
+
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
@@ -22,7 +26,6 @@ class Config(PrefixProto):
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
-        "accelerator": "dp",
     }
     # model params
     encoder_layers = 6

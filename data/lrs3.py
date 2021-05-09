@@ -81,11 +81,11 @@ class LRS3DataModule(LightningDataModule):
             print("Serializing data.")
             start = datetime.datetime.now()
             self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "pretrain"))
+                dataset_directory=os.path.join(data_dir, self.config.train_dir))
             self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "trainval"))
+                dataset_directory=os.path.join(data_dir, self.config.val_dir))
             self.test_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "test"))
+                dataset_directory=os.path.join(data_dir, self.config.test_dir))
 
             # apply wrappers
             self.train_dataset = self.config.wrapper_func(self.train_dataset)
