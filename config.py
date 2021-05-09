@@ -1,7 +1,8 @@
 # Created by Patrick Kao
 import torch.cuda
-from params_proto.neo_proto import PrefixProto
+from params_proto.neo_proto import PrefixProto, Flag
 
+from data.lrs2 import LRSFileLazyDataset
 from data.lrs3 import LRSLazyDataSet
 from data.maxlen_wrapper import MaxLenWrapper
 
@@ -40,4 +41,14 @@ class Config(PrefixProto):
 
 
 class LRS2Config(Config):
-    dataset_dir = ""
+    dataset_dir = "dataset_dir/lrs2"
+    train_dir = "pretrain"
+    val_dir = "main"
+    test_dir = "main"
+    additional_train_dir = "main"
+    train_kwargs = {"file_list": "train.txt"}
+    test_kwargs = {"file_list" : "test.txt"}
+    val_kwargs = {"file_list" : "val.txt"}
+    additional_kwargs = {"file_list" : "pretrain.txt"}
+
+    dataset_class = LRSFileLazyDataset

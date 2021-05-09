@@ -1,12 +1,6 @@
 # Created by Patrick Kao
 import os
 
-from pytorch_lightning import Trainer
-
-from config import Config
-from data.lrs3 import LRSDataModule
-from model.sign_translator import SignTranslator
-
 
 def remove_slurm_vars():
     for k, v in os.environ.items():
@@ -18,6 +12,12 @@ def remove_slurm_vars():
 
 if __name__ == '__main__':
     remove_slurm_vars()
+    from pytorch_lightning import Trainer
+
+    from config import Config
+    from data.lrs3 import LRSDataModule
+    from model.sign_translator import SignTranslator
+
     data = LRSDataModule(Config)
     model = SignTranslator(Config)
 
