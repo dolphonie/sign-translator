@@ -23,7 +23,7 @@ def embedding_to_logits(embedding, embed_matrix):
     return logits
 
 
-class Decoder(nn.Module):
+class GreedyDecoder(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
@@ -43,7 +43,7 @@ class Decoder(nn.Module):
 
     def forward(self, encoder_output, encoder_padding, target_sequence):
         """
-        #TODO: What the heck is this docstring?
+
         :param encoder_output: Shape: time x batch x feature
         :param lengths:
         :return: output_logits: shape out_length x batch x vocab_size
@@ -67,8 +67,10 @@ class Decoder(nn.Module):
         tgt_mask = tgt_mask.to(device)
         # transformer_decoder wants batch second
 
-        decoder_outputs = torch.zeros(max_target_len, batch_size, self.word_embed_dim).type_as(
-            encoder_output)
+        # decoder_outputs = torch.zeros(max_target_len, batch_size, self.word_embed_dim).type_as(
+        #     encoder_output)
+        embed_matrix = self.word_embedding.weight.data.detach()  # shape: vocab x embed_dim
+        all_logits = torch.zeros(max_target_len, batch_size, embed_matrix.shape[0]).type_as(encoder_output)
         built_seq = torch.zeros(max_target_len, batch_size, self.transformer_dim)
         built_seq = built_seq.type_as(encoder_output)
 
@@ -88,22 +90,24 @@ class Decoder(nn.Module):
                                                  tgt_mask=tgt_mask,
                                                  tgt_key_padding_mask=attention_padding,
                                                  memory_key_padding_mask=encoder_padding)
-            # trans_out shape: time x batch x embed
-            decoded = self.dec_to_embed_bridge(trans_out)
-            decoded_time = decoded[i]  # embedding of predicted output
+            # trans_out shape: time x batch x embed  /TODO: not embed, but transformer_dim?
+            decoded = self.dec_to_embed_bridge(trans_out[i])  #todo: confirm, shoudln't need non-i time values?
+            # decoded shape: batch x embed
+            # decoded_time = decoded[i]  # embedding of predicted output
 
-            decoder_outputs[i] = decoded_time
+            logits = embedding_to_logits(decoded, embed_matrix).squeeze(-1)  # batch x vocab
+            all_logits[i] = logits
+            greedy_input_ids = torch.argmax(logits, dim=1, keepdim=True)  # get highest probability token greedily
+            greedy_attention = greedy_input_ids != self.language_model.tokenizer.eos_token
+            # greedy_input_ids shape: batch x 1
 
             # lm features shape: batch x 1 x hidden
             lm_features, lm_past, lm_attention = self.language_model.forward(
-                input_ids=input_ids[:, i:i + 1],
-                attention_mask=attention_padding_normal[:, i:i + 1],
+                input_ids=input_ids[:, i:i + 1] if teacher_forcing else greedy_input_ids,
+                attention_mask=attention_padding_normal[:, i:i + 1] if teacher_forcing else greedy_attention,
                 past_key_values=lm_past,
                 past_attention_mask=lm_attention)
-            built_seq[i, :, :self.word_embed_dim] = tokens_embed[i]
+            built_seq[i, :, :self.word_embed_dim] = tokens_embed[i] if teacher_forcing else decoded
             built_seq[i, :, self.word_embed_dim:] = lm_features.permute(1, 0, 2)
 
-        embed_matrix = self.word_embedding.weight.data.detach()  # shape: vocab x embed_dim
-        logits = embedding_to_logits(decoder_outputs, embed_matrix).squeeze(-1)
-
-        return logits, input_ids
+        return all_logits, input_ids
