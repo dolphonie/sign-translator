@@ -4,11 +4,11 @@ from pytorch_lightning.tuner.tuning import Tuner
 from torch import nn
 
 from config import Config
-from data.lrs3 import LRS3DataModule
+from data.lrs3 import LRSDataModule
 from model.sign_translator import SignTranslator
 
 if __name__ == "__main__":
-    data = LRS3DataModule(Config)
+    data = LRSDataModule(Config)
     model = SignTranslator(Config)
     trainer = Trainer()
     tuner = Tuner(trainer)

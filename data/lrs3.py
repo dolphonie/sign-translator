@@ -7,7 +7,7 @@ from typing import Optional, Any, Union, List
 import dill
 from params_proto.neo_proto import PrefixProto
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, ConcatDataset
 
 from data import loader_utils
 from data.loader_utils import collate_batch, get_frame_text
@@ -64,7 +64,7 @@ class LRSLazyDataSet(Dataset):
         return {"frames": frames, "text": text}
 
 
-class LRS3DataModule(LightningDataModule):
+class LRSDataModule(LightningDataModule):
     def __init__(self, config: PrefixProto.__class__):
         super().__init__()
         self.config = config
@@ -81,11 +81,19 @@ class LRS3DataModule(LightningDataModule):
             print("Serializing data.")
             start = datetime.datetime.now()
             self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.train_dir))
+                dataset_directory=os.path.join(data_dir, self.config.train_dir),
+                **self.config.train_kwargs)
             self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.val_dir))
+                dataset_directory=os.path.join(data_dir, self.config.val_dir),
+                **self.config.val_kwargs)
             self.test_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.test_dir))
+                dataset_directory=os.path.join(data_dir, self.config.test_dir),
+                **self.config.test_kwargs)
+            if self.config.additional_train_dir is not None:
+                add_dataset = self.config.dataset_class(
+                    dataset_directory=os.path.join(data_dir, self.config.additional_train_dir),
+                    **self.config.additional_train_kwargs)
+                self.train_dataset = ConcatDataset([self.train_dataset, add_dataset])
 
             # apply wrappers
             self.train_dataset = self.config.wrapper_func(self.train_dataset)

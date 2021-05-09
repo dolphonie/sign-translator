@@ -16,6 +16,10 @@ class Config(PrefixProto):
     val_dir = "trainval"
     test_dir = "test"
     additional_train_dir = None
+    train_kwargs = {}
+    test_kwargs = {}
+    val_kwargs = {}
+    additional_kwargs = {}
 
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
@@ -33,3 +37,7 @@ class Config(PrefixProto):
     decoder_layers = 6
     teacher_forcing_probability = 0.8
     frame_embed_dim = 1
+
+
+class LRS2Config(Config):
+    dataset_dir = ""

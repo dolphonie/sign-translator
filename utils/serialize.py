@@ -1,5 +1,5 @@
 # Created by Patrick Kao
 from config import Config
-from data.lrs3 import LRS3DataModule
+from data.lrs3 import LRSDataModule
 
-data = LRS3DataModule(Config)
+data = LRSDataModule(Config)
