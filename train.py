@@ -7,10 +7,10 @@ def remove_slurm_vars():
         if "SLURM" in k:
             print(f"Deleting env variable {k}")
             del os.environ[k]
-
+            
+remove_slurm_vars()
 
 if __name__ == '__main__':
-    remove_slurm_vars()
     from pytorch_lightning import Trainer
 
     from config import Config
