@@ -13,7 +13,7 @@ from data import loader_utils
 from data.loader_utils import collate_batch, get_frame_text
 
 
-class LRS3WholeDataSet(Dataset):
+class LRSWholeDataSet(Dataset):
     def __init__(self, dataset_directory: str, transform=None, start_str="Text:  ",
                  load_file_list=None):
 
@@ -45,7 +45,7 @@ class LRS3WholeDataSet(Dataset):
         return data_list
 
 
-class LRS3LazyDataSet(Dataset):
+class LRSLazyDataSet(Dataset):
     def __init__(self, dataset_directory: str = None, transform=None, start_str="Text:  ",
                  load_file_list=None):
         assert (dataset_directory and (not load_file_list)) or (

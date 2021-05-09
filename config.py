@@ -2,7 +2,7 @@
 import torch.cuda
 from params_proto.neo_proto import PrefixProto
 
-from data.lrs3 import LRS3LazyDataSet
+from data.lrs3 import LRSLazyDataSet
 from data.maxlen_wrapper import MaxLenWrapper
 
 
@@ -15,13 +15,14 @@ class Config(PrefixProto):
     train_dir = "pretrain"
     val_dir = "trainval"
     test_dir = "test"
+    additional_train_dir = None
 
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
 
     # data
-    dataset_class = LRS3LazyDataSet
+    dataset_class = LRSLazyDataSet
     wrapper_func = wrapper_func
 
     trainer_params = {
