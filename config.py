@@ -1,6 +1,6 @@
 # Created by Patrick Kao
 import torch.cuda
-from params_proto.neo_proto import PrefixProto, Flag
+from params_proto.neo_proto import PrefixProto
 
 from data.lrs2 import LRSFileLazyDataset
 from data.lrs3 import LRSLazyDataSet
@@ -32,8 +32,7 @@ class Config(PrefixProto):
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
-        "accelerator" : "ddp",
-        "replace_sampler_ddp" : False,
+        "accelerator": "ddp",
     }
     # model params
     encoder_layers = 6
@@ -49,8 +48,8 @@ class LRS2Config(Config):
     test_dir = "main"
     additional_train_dir = "main"
     train_kwargs = {"file_list": "train.txt"}
-    test_kwargs = {"file_list" : "test.txt"}
-    val_kwargs = {"file_list" : "val.txt"}
-    additional_kwargs = {"file_list" : "pretrain.txt"}
+    test_kwargs = {"file_list": "test.txt"}
+    val_kwargs = {"file_list": "val.txt"}
+    additional_kwargs = {"file_list": "pretrain.txt"}
 
     dataset_class = LRSFileLazyDataset

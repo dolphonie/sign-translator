@@ -2,13 +2,13 @@
 import os
 
 
-def remove_slurm_vars():
-    for k, v in os.environ.items():
-        if "SLURM" in k:
-            print(f"Deleting env variable {k}")
-            del os.environ[k]
-            
-remove_slurm_vars()
+# def remove_slurm_vars():
+#     for k, v in os.environ.items():
+#         if "SLURM" in k:
+#             print(f"Deleting env variable {k}")
+#             del os.environ[k]
+#
+# remove_slurm_vars()
 
 if __name__ == '__main__':
     from pytorch_lightning import Trainer
