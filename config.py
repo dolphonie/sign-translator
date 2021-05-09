@@ -9,6 +9,7 @@ from data.maxlen_wrapper import MaxLenWrapper
 def wrapper_func(dataset):
     return MaxLenWrapper(dataset, max_len=120)
 
+
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
     batch_size = 2
@@ -21,6 +22,7 @@ class Config(PrefixProto):
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
+        "accelerator": "dp",
     }
     # model params
     encoder_layers = 6
