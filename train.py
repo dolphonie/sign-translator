@@ -4,7 +4,6 @@ import os
 
 def remove_slurm_vars():
     for k, v in os.environ.items():
-        print(k)
         if "SLURM" in k:
             print(f"Deleting env variable {k}")
             del os.environ[k]
