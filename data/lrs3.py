@@ -75,11 +75,8 @@ class LRS3DataModule(LightningDataModule):
 
         load_filename = self.config.serialize_dataset_path
         if os.path.isfile(load_filename):
-            [train_list, val_list, test_list] = dill.load(
+            [self.train_dataset, self.val_dataset, self.test_dataset] = dill.load(
                 open(load_filename, 'rb'))
-            self.train_dataset = self.config.dataset_class(load_file_list=train_list)
-            self.val_dataset = self.config.dataset_class(load_file_list=val_list)
-            self.test_dataset = self.config.dataset_class(load_file_list=test_list)
         else:
             print("Serializing data.")
             start = datetime.datetime.now()
@@ -89,17 +86,18 @@ class LRS3DataModule(LightningDataModule):
                 dataset_directory=os.path.join(data_dir, "trainval"))
             self.test_dataset = self.config.dataset_class(
                 dataset_directory=os.path.join(data_dir, "test"))
-            print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
+            # apply wrappers
+            self.train_dataset = self.config.wrapper_func(self.train_dataset)
+            self.val_dataset = self.config.wrapper_func(self.val_dataset)
+            self.test_dataset = self.config.wrapper_func(self.test_dataset)
+
+            # TODO: save in way that tolerates changes to dataset class
             Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
-            dill.dump([self.train_dataset.data_list, self.val_dataset.data_list,
-                       self.test_dataset.data_list],
+            dill.dump([self.train_dataset, self.val_dataset,
+                       self.test_dataset],
                       open(load_filename, mode='wb'))
-
-        # apply wrappers
-        self.train_dataset = self.config.wrapper_func(self.train_dataset)
-        self.val_dataset = self.config.wrapper_func(self.val_dataset)
-        self.test_dataset = self.config.wrapper_func(self.test_dataset)
+            print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
     def train_dataloader(self) -> Any:
         return DataLoader(self.train_dataset, batch_size=self.batch_size,
