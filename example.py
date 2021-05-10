@@ -48,7 +48,7 @@ transform=transforms.Compose([transforms.ToTensor(),
                               transforms.Normalize((0.1307,), (0.3081,))])
 
 # data
-mnist_train = MNIST(os.getcwd(), train=True, download=True, transform=transform)
+mnist_train = MNIST(os.getcwd(), train=True, download=False, transform=transform)
 mnist_train = DataLoader(mnist_train, batch_size=64)
 
 model = LitMNIST()
