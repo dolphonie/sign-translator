@@ -10,6 +10,8 @@ from data.maxlen_wrapper import MaxLenWrapper
 def wrapper_func(dataset):
     return MaxLenWrapper(dataset, max_len=120)
 
+def no_wrapper(dataset):
+    return dataset
 
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
@@ -20,7 +22,7 @@ class Config(PrefixProto):
     train_kwargs = {}
     test_kwargs = {}
     val_kwargs = {}
-    additional_kwargs = {}
+    additional_train_kwargs = {}
 
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
@@ -32,7 +34,6 @@ class Config(PrefixProto):
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
-        "accelerator": "ddp",
     }
     # model params
     encoder_layers = 6
@@ -42,14 +43,15 @@ class Config(PrefixProto):
 
 
 class LRS2Config(Config):
-    dataset_dir = "dataset_dir/lrs2"
-    train_dir = "pretrain"
+    serialize_dataset_path = "datasets_lrs2.dill"
+    dataset_dir = "dataset_dir/lrs2/mvlrs_v1"
+    train_dir = "main"
     val_dir = "main"
     test_dir = "main"
-    additional_train_dir = "main"
+    additional_train_dir = "pretrain"
     train_kwargs = {"file_list": "train.txt"}
     test_kwargs = {"file_list": "test.txt"}
     val_kwargs = {"file_list": "val.txt"}
-    additional_kwargs = {"file_list": "pretrain.txt"}
+    additional_train_kwargs = {"file_list": "pretrain.txt"}
 
     dataset_class = LRSFileLazyDataset
