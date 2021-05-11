@@ -1,17 +1,17 @@
 # Created by Patrick Kao
+import argparse
 import os
 
+
+def remove_slurm_vars():
+    for k, v in os.environ.items():
+        if "SLURM" in k:
+            print(f"Deleting env variable {k}")
+            del os.environ[k]
+
+
 if __name__ == '__main__':
-    def remove_slurm_vars():
-        for k, v in os.environ.items():
-            if "SLURM" in k:
-                print(f"Deleting env variable {k}")
-                del os.environ[k]
-
-
     remove_slurm_vars()
-
-    import argparse
 
     from pytorch_lightning import Trainer
 
@@ -31,3 +31,4 @@ if __name__ == '__main__':
 
     trainer = Trainer(**config.trainer_params)
     trainer.fit(model, data)
+    print(f"Counts {data.train_dataset.get_included_excluded_counts()}")

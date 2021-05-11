@@ -33,11 +33,21 @@ class MaxLenWrapperIterable(Dataset):
     def __init__(self, dataset: Dataset, max_len: int):
         self.dataset = dataset
         self.max_len = max_len
+        self.include_count = 0
+        self.exclude_indices = set()
 
     def __iter__(self):
-        for item in self.dataset:
-            size = item["frames"].shape[0]
-            if size <= self.max_len:
-                yield item
-            else:
+        for i in range(len(self.dataset)):
+            if i in self.exclude_indices:
                 continue
+            else:
+                item = self.dataset[i]
+                size = item["frames"].shape[0]
+                if size <= self.max_len:
+                    self.include_count += 1
+                    yield item
+                else:
+                    self.exclude_indices.add(i)
+
+    def get_included_excluded_counts(self):
+        return self.include_count, len(self.exclude_indices)
