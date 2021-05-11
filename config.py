@@ -41,7 +41,8 @@ class Config(PrefixProto):
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
-
+        "limit_train_batches": 1000,
+        "max_epochs": 1,
     }
     # model params
     encoder_layers = 6
