@@ -50,6 +50,9 @@ class LRSLazyDataSet(Dataset):
                  load_file_list=None):
         assert (dataset_directory is None and (not load_file_list is None)) or (
                 (not dataset_directory is None) and load_file_list is None)
+        if dataset_directory is not None:
+            cur_file = os.path.dirname(os.path.realpath(__file__))
+            dataset_directory = os.path.join(cur_file, "..", dataset_directory)
         self.data_list = load_file_list if load_file_list is not None else \
             loader_utils.crawl_directory_one_nest(dataset_directory)
         self.transform = transform
