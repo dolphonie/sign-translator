@@ -1,5 +1,5 @@
 # Created by Patrick Kao
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, IterableDataset
 
 
 class MaxLenWrapper(Dataset):
@@ -29,7 +29,7 @@ class MaxLenWrapper(Dataset):
         return filtered_indices
 
 
-class MaxLenWrapperIterable(Dataset):
+class MaxLenWrapperIterable(IterableDataset):
     def __init__(self, dataset: Dataset, max_len: int):
         self.dataset = dataset
         self.max_len = max_len

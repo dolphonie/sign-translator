@@ -109,10 +109,12 @@ class LRSDataModule(LightningDataModule):
 
     def train_dataloader(self) -> Any:
         return DataLoader(self.train_dataset, batch_size=self.batch_size,
-                          collate_fn=collate_batch)
+                          collate_fn=collate_batch, shuffle=True)
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.val_dataset, batch_size=self.batch_size)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, collate_fn=collate_batch,
+                          shuffle=False)
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, collate_fn=collate_batch,
+                          shuffle=False)
