@@ -56,6 +56,8 @@ def get_frame_text(base_path, start_str, transform=None):
 def collate_batch(batch):
     frames = [el["frames"] for el in batch]
     text = [el["text"] for el in batch]
-    lengths = [el.shape[0] for el in frames]
+    lengths = torch.tensor([el.shape[0] for el in frames])
     padded_frames = torch.nn.utils.rnn.pad_sequence(frames, batch_first=True)
-    return padded_frames, lengths, text
+    # for dataparallel, lists are not scattered so let each gpu keep track of which labels it needs
+    text_indices = torch.arange(padded_frames.shape[0])
+    return padded_frames, lengths, text, text_indices

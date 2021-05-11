@@ -32,6 +32,10 @@ class Decoder(nn.Module):
         # start with same word embeddng as language model but clone for training
         self.word_embedding = copy.deepcopy(self.language_model.token_embedding_layer())
 
+        # freeze lm
+        self.language_model.requires_grad_(False)
+        self.word_embedding.requires_grad_(False)
+
         self.word_embed_dim = self.word_embedding.embedding_dim
         self.lm_dim = self.language_model.model.config.n_embd
         self.transformer_dim = self.word_embed_dim + self.lm_dim

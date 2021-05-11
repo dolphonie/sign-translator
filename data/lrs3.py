@@ -7,13 +7,13 @@ from typing import Optional, Any, Union, List
 import dill
 from params_proto.neo_proto import PrefixProto
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, ConcatDataset
 
 from data import loader_utils
 from data.loader_utils import collate_batch, get_frame_text
 
 
-class LRS3WholeDataSet(Dataset):
+class LRSWholeDataSet(Dataset):
     def __init__(self, dataset_directory: str, transform=None, start_str="Text:  ",
                  load_file_list=None):
 
@@ -45,11 +45,14 @@ class LRS3WholeDataSet(Dataset):
         return data_list
 
 
-class LRS3LazyDataSet(Dataset):
+class LRSLazyDataSet(Dataset):
     def __init__(self, dataset_directory: str = None, transform=None, start_str="Text:  ",
                  load_file_list=None):
-        assert (dataset_directory and (not load_file_list)) or (
-                (not dataset_directory) and load_file_list)
+        assert (dataset_directory is None and (not load_file_list is None)) or (
+                (not dataset_directory is None) and load_file_list is None)
+        if dataset_directory is not None:
+            cur_file = os.path.dirname(os.path.realpath(__file__))
+            dataset_directory = os.path.join(cur_file, "..", dataset_directory)
         self.data_list = load_file_list if load_file_list is not None else \
             loader_utils.crawl_directory_one_nest(dataset_directory)
         self.transform = transform
@@ -64,7 +67,7 @@ class LRS3LazyDataSet(Dataset):
         return {"frames": frames, "text": text}
 
 
-class LRS3DataModule(LightningDataModule):
+class LRSDataModule(LightningDataModule):
     def __init__(self, config: PrefixProto.__class__):
         super().__init__()
         self.config = config
@@ -75,38 +78,44 @@ class LRS3DataModule(LightningDataModule):
 
         load_filename = self.config.serialize_dataset_path
         if os.path.isfile(load_filename):
-            [train_list, val_list, test_list] = dill.load(
+            [self.train_dataset, self.val_dataset, self.test_dataset] = dill.load(
                 open(load_filename, 'rb'))
-            self.train_dataset = self.config.dataset_class(load_file_list=train_list)
-            self.val_dataset = self.config.dataset_class(load_file_list=val_list)
-            self.test_dataset = self.config.dataset_class(load_file_list=test_list)
         else:
             print("Serializing data.")
             start = datetime.datetime.now()
             self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "pretrain"))
+                dataset_directory=os.path.join(data_dir, self.config.train_dir),
+                **self.config.train_kwargs)
             self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "trainval"))
+                dataset_directory=os.path.join(data_dir, self.config.val_dir),
+                **self.config.val_kwargs)
             self.test_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, "test"))
-            print(f"Completed serialization in: {datetime.datetime.now() - start}")
+                dataset_directory=os.path.join(data_dir, self.config.test_dir),
+                **self.config.test_kwargs)
+            if self.config.additional_train_dir is not None:
+                add_dataset = self.config.dataset_class(
+                    dataset_directory=os.path.join(data_dir, self.config.additional_train_dir),
+                    **self.config.additional_train_kwargs)
+                self.train_dataset = ConcatDataset([self.train_dataset, add_dataset])
 
+            # apply wrappers
+            self.train_dataset = self.config.wrapper_func(self.train_dataset)
+            self.val_dataset = self.config.wrapper_func(self.val_dataset)
+            self.test_dataset = self.config.wrapper_func(self.test_dataset)
+
+            # TODO: save in way that tolerates changes to dataset class
             Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
-            dill.dump([self.train_dataset.data_list, self.val_dataset.data_list,
-                       self.test_dataset.data_list],
+            dill.dump([self.train_dataset, self.val_dataset,
+                       self.test_dataset],
                       open(load_filename, mode='wb'))
-
-        # apply wrappers
-        self.train_dataset = self.config.wrapper_func(self.train_dataset)
-        self.val_dataset = self.config.wrapper_func(self.val_dataset)
-        self.test_dataset = self.config.wrapper_func(self.test_dataset)
+            print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
     def train_dataloader(self) -> Any:
         return DataLoader(self.train_dataset, batch_size=self.batch_size,
                           collate_fn=collate_batch)
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.val_dataset, batch_size=self.batch_size)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, collate_fn=collate_batch)
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, collate_fn=collate_batch)
