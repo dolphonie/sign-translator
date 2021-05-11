@@ -4,14 +4,20 @@ from params_proto.neo_proto import PrefixProto
 
 from data.lrs2 import LRSFileLazyDataset
 from data.lrs3 import LRSLazyDataSet
-from data.maxlen_wrapper import MaxLenWrapper
+from data.maxlen_wrapper import MaxLenWrapper, MaxLenWrapperIterable
 
 
 def wrapper_func(dataset):
     return MaxLenWrapper(dataset, max_len=120)
 
+
 def no_wrapper(dataset):
     return dataset
+
+
+def iterable_wrapper(dataset):
+    return MaxLenWrapperIterable(dataset, max_len=200)
+
 
 class Config(PrefixProto):
     dataset_dir = "dataset_dir/lrs3"
@@ -30,7 +36,7 @@ class Config(PrefixProto):
 
     # data
     dataset_class = LRSLazyDataSet
-    wrapper_func = wrapper_func
+    wrapper_func = iterable_wrapper
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
