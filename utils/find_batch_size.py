@@ -34,6 +34,6 @@ if __name__ == '__main__':
     tuner = Tuner(trainer)
 
     # Invoke method
-    new_batch_size = tuner.scale_batch_size(model, datamodule=data)
+    new_batch_size = tuner.scale_batch_size(model, datamodule=data, init_val=4)
 
     print(f"Biggest batch that fits: {new_batch_size}")
