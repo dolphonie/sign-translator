@@ -24,6 +24,8 @@ class Encoder(nn.Module):
         # transformer_encoder wants batch second
         encoder_input = frame_embeddings.permute(1, 0, 2)
         encoder_input = self.pos_embed(encoder_input)
+        print(f"input size {encoder_input.shape}")
+        print(f"mask size {padding_mask.shape}")
         encoded = self.transformer_encoder(src=encoder_input,
                                            src_key_padding_mask=padding_mask)
         return encoded, padding_mask
