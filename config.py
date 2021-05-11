@@ -16,7 +16,7 @@ def no_wrapper(dataset):
 
 
 def iterable_wrapper(dataset):
-    return MaxLenWrapperIterable(dataset, max_len=200)
+    return MaxLenWrapperIterable(dataset, max_len=120)
 
 
 class Config(PrefixProto):
