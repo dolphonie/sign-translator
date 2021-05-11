@@ -2,6 +2,7 @@
 
 from typing import List
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
 from torch import nn, Tensor
@@ -20,7 +21,8 @@ class SignTranslator(pl.LightningModule):
         self.decoder = Decoder(config)
         self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, frames: Tensor, lengths: List[int], labels: List[str]):
+    def forward(self, frames: Tensor, lengths: List[int], labels: List[str],
+                labels_id: Tensor = None):
         """
 
         :param frames: batch x time x channels x height x width
@@ -31,6 +33,10 @@ class SignTranslator(pl.LightningModule):
         print(f"frames shape{frames.shape}")
         print(f"lengths {lengths}")
         print(f"labels {labels}")
+        if labels_id is not None:
+            labels = np.asarray(labels)
+            labels = labels[labels_id.detach().cpu()]
+            labels = list(labels)
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
@@ -40,11 +46,12 @@ class SignTranslator(pl.LightningModule):
         return output_logits, labels_tokenized
 
     def training_step(self, batch, batch_idx):
-        frames, lengths, labels = batch
+        frames, lengths, labels, labels_id = batch
         frames_tr = transform_frames_for_pretrain(frames)
         output_logits, labels_tokenized = self.forward(frames=frames_tr,
                                                        lengths=lengths,
-                                                       labels=labels, )
+                                                       labels=labels,
+                                                       labels_id=labels_id)
         # no need to shift as in GPT2 objective, since each logit corresponds to the prediction
         # for the corresponding word
         logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
