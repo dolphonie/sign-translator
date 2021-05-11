@@ -30,9 +30,6 @@ class SignTranslator(pl.LightningModule):
         :param labels: length batch
         :return:
         """
-        print(f"frames shape{frames.shape}")
-        print(f"lengths {lengths}")
-        print(f"labels {labels}")
         if labels_id is not None:
             labels = np.asarray(labels)
             labels = labels[labels_id.detach().cpu()]
