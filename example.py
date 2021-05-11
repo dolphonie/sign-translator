@@ -1,57 +1,67 @@
-# Created by Patrick Kao
 import os
 
-import torch.cuda
+import torch
+from torch.utils.data import DataLoader, Dataset
+
 from pytorch_lightning import LightningModule, Trainer
-from torch import nn
-from torch.nn import functional as F
-from torch.optim import Adam
-from torch.utils.data import DataLoader
-from torchvision import transforms
-from torchvision.datasets import MNIST
 
-if __name__ == "__main__":
 
-    class LitMNIST(LightningModule):
+class RandomDataset(Dataset):
 
-        def __init__(self):
-            super().__init__()
+    def __init__(self, size, length):
+        self.len = length
+        self.data = torch.randn(length, size)
 
-            # mnist images are (1, 28, 28) (channels, width, height)
-            self.layer_1 = nn.Linear(28 * 28, 128)
-            self.layer_2 = nn.Linear(128, 256)
-            self.layer_3 = nn.Linear(256, 10)
+    def __getitem__(self, index):
+        return self.data[index]
 
-        def forward(self, x):
-            batch_size, channels, width, height = x.size()
+    def __len__(self):
+        return self.len
 
-            # (b, 1, 28, 28) -> (b, 1*28*28)
-            x = x.view(batch_size, -1)
-            x = self.layer_1(x)
-            x = F.relu(x)
-            x = self.layer_2(x)
-            x = F.relu(x)
-            x = self.layer_3(x)
 
-            x = F.log_softmax(x, dim=1)
-            return x
+class BoringModel(LightningModule):
 
-        def training_step(self, batch, batch_idx):
-            x, y = batch
-            logits = self(x)
-            loss = F.nll_loss(logits, y)
-            return loss
+    def __init__(self):
+        super().__init__()
+        self.layer = torch.nn.Linear(32, 2)
 
-        def configure_optimizers(self):
-            return Adam(self.parameters(), lr=1e-3)
+    def forward(self, x):
+        return self.layer(x)
 
-    transform=transforms.Compose([transforms.ToTensor(),
-                                  transforms.Normalize((0.1307,), (0.3081,))])
+    def training_step(self, batch, batch_idx):
+        loss = self(batch).sum()
+        self.log("train_loss", loss)
+        return {"loss": loss}
 
-    # data
-    mnist_train = MNIST(os.getcwd(), train=True, download=False, transform=transform)
-    mnist_train = DataLoader(mnist_train, batch_size=64)
+    def validation_step(self, batch, batch_idx):
+        loss = self(batch).sum()
+        self.log("valid_loss", loss)
 
-    model = LitMNIST()
-    trainer = Trainer(gpus=-1 if torch.cuda.is_available() else None)
-    trainer.fit(model, mnist_train)
+    def test_step(self, batch, batch_idx):
+        loss = self(batch).sum()
+        self.log("test_loss", loss)
+
+    def configure_optimizers(self):
+        return torch.optim.SGD(self.layer.parameters(), lr=0.1)
+
+
+def run():
+    train_data = DataLoader(RandomDataset(32, 64), batch_size=2)
+    val_data = DataLoader(RandomDataset(32, 64), batch_size=2)
+    test_data = DataLoader(RandomDataset(32, 64), batch_size=2)
+
+    model = BoringModel()
+    trainer = Trainer(
+        default_root_dir=os.getcwd(),
+        limit_train_batches=1,
+        limit_val_batches=1,
+        num_sanity_val_steps=0,
+        max_epochs=1,
+        weights_summary=None,
+    )
+    trainer.fit(model, train_dataloader=train_data, val_dataloaders=val_data)
+    trainer.test(model, test_dataloaders=test_data)
+
+
+if __name__ == '__main__':
+    run()
