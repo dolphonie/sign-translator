@@ -3,7 +3,7 @@ import torch.cuda
 from params_proto.neo_proto import PrefixProto
 
 from data.lrs2 import LRSFileLazyDataset
-from data.lrs3 import LRSLazyDataSet
+from data.lrs3 import LRSLazyDataSet, LRSWholeDataSet
 from data.maxlen_wrapper import MaxLenWrapper, MaxLenWrapperIterable
 
 
@@ -16,7 +16,7 @@ def no_wrapper(dataset):
 
 
 def iterable_wrapper(dataset):
-    return MaxLenWrapperIterable(dataset, max_len=120)
+    return MaxLenWrapperIterable(dataset, max_len=70)
 
 
 class Config(PrefixProto):
@@ -52,6 +52,9 @@ class Config(PrefixProto):
     teacher_forcing_probability = 0  # 0.8
     frame_embed_dim = 1
 
+    visualize_freq = 10
+    num_epochs = 5
+
 
 class LRS2Config(Config):
     serialize_dataset_path = "datasets_lrs2.dill"
@@ -66,3 +69,11 @@ class LRS2Config(Config):
     additional_train_kwargs = {"file_list": "pretrain.txt"}
 
     dataset_class = LRSFileLazyDataset
+
+
+class WholeConfig(LRS2Config):
+    serialize_dataset_path = "dataset_lrs2_whole.dill"
+    dataset_class = LRSWholeDataSet
+    train_kwargs = {}
+    test_kwargs = {}
+    val_kwargs = {}
