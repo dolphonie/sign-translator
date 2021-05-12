@@ -37,9 +37,6 @@ class SignTranslatorNoLightning(nn.Module):
             labels = list(labels)
 
         print(f"Labels elapsed: {datetime.datetime.now()-start}")
-        frames = frames[:, :4]
-        labels[0] = " ".join(labels[0].split(" ")[:2])
-        labels[1] = " ".join(labels[1].split(" ")[:2])
 
         start = datetime.datetime.now()
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
