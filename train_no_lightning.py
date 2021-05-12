@@ -7,6 +7,7 @@ from torch import nn, Tensor
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
+from model.pretrain_videocnn import transform_frames_for_pretrain
 from model.sign_translator_no_lightning import SignTranslatorNoLightning
 
 
@@ -47,7 +48,20 @@ if __name__ == '__main__':
             for i, batch in enumerate(tepoch):
                 batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
                 optim.zero_grad()
-                loss = model.module.training_step(batch)
+                frames, lengths, labels, labels_id = batch
+                frames_tr = transform_frames_for_pretrain(frames)
+                output_logits, labels_tokenized = model(frames=frames_tr,
+                                                               lengths=lengths,
+                                                               labels=labels,
+                                                               labels_id=labels_id)
+                # no need to shift as in GPT2 objective, since each logit corresponds to the
+                # prediction
+                # for the corresponding word
+                logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
+                labels_contig = labels_tokenized.contiguous()
+                # Flatten the tokens
+                loss = model.loss_fn(logits_contig.view(-1, logits_contig.size(-1)),
+                                    labels_contig.view(-1))
                 loss.backward()
                 optim.step()
                 writer.add_scalar("train_loss", loss.detach(), i)
