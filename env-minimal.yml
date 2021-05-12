@@ -17,6 +17,7 @@ dependencies:
   - pip:
       - argcomplete
       - argparse
+      - jiwer
       - params-proto
       - typing
       - waterbear
