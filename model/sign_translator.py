@@ -36,10 +36,6 @@ class SignTranslator(pl.LightningModule):
             labels = labels[labels_id.detach().cpu()]
             labels = list(labels)
 
-        frames = frames[:, :4]
-        labels[0] = " ".join(labels[0].split(" ")[:2])
-        labels[1] = " ".join(labels[1].split(" ")[:2])
-
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
@@ -64,7 +60,7 @@ class SignTranslator(pl.LightningModule):
                 # Flatten the tokens
                 loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
                 self.log("train_loss", loss)
-                print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
+            print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
         return loss
 
     def configure_optimizers(self):
