@@ -20,16 +20,20 @@ def remove_slurm_vars():
 if __name__ == '__main__':
     remove_slurm_vars()
 
-    from config import Config, LRS2Config
+    from config import Config, LRS2Config, WholeConfig
     from data.lrs3 import LRSDataModule
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--lrs2", action="store_true", help="Use the LRS2 Dataset params")
+    parser.add_argument("-w", "--whole", action="store_true")
     args = parser.parse_args()
 
     config = Config
     if args.lrs2:
         config = LRS2Config
+    if args.whole:
+        config = WholeConfig
+
     data = LRSDataModule(config)
     data.setup()
     model = SignTranslatorNoLightning(config)
