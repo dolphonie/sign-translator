@@ -38,7 +38,7 @@ class SignTranslatorNoLightning(nn.Module):
         frames = frames[:, :4]
         labels[0] = " ".join(labels[0].split(" ")[:2])
         labels[1] = " ".join(labels[1].split(" ")[:2])
-        
+
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)

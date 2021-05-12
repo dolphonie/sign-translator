@@ -60,7 +60,8 @@ class SignTranslator(pl.LightningModule):
                 # Flatten the tokens
                 loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
                 self.log("train_loss", loss)
-            print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
+
+        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
         return loss
 
     def configure_optimizers(self):
