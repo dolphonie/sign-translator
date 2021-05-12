@@ -95,10 +95,10 @@ class GreedyDecoder(nn.Module):
             # decoded shape: batch x embed
             # decoded_time = decoded[i]  # embedding of predicted output
 
-            logits = embedding_to_logits(decoded, embed_matrix).squeeze(-1)  # batch x vocab
+            logits = embedding_to_logits(decoded, embed_matrix).squeeze(-1).squeeze(0)  # batch x vocab
             all_logits[i] = logits
             greedy_input_ids = torch.argmax(logits, dim=1, keepdim=True)  # get highest probability token greedily
-            greedy_attention = greedy_input_ids != self.language_model.tokenizer.eos_token
+            greedy_attention = greedy_input_ids != self.language_model.model.config.eos_token_id
             # greedy_input_ids shape: batch x 1
 
             # lm features shape: batch x 1 x hidden
