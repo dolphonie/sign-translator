@@ -50,6 +50,9 @@ class Config(PrefixProto):
     teacher_forcing_probability = 0.8
     frame_embed_dim = 1
 
+    visualize_freq = 10
+    num_epochs = 5
+
 
 class LRS2Config(Config):
     serialize_dataset_path = "datasets_lrs2.dill"

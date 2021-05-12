@@ -12,7 +12,7 @@ from model.encoder import Encoder
 from model.pretrain_videocnn import get_pretrained_cnn, transform_frames_for_pretrain
 
 
-class SignTranslator(nn.Module):
+class SignTranslatorNoLightning(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config

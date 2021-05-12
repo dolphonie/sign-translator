@@ -2,6 +2,13 @@
 import argparse
 import os
 
+import torch
+from torch import nn, Tensor
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
+from model.sign_translator_no_lightning import SignTranslatorNoLightning
+
 
 def remove_slurm_vars():
     for k, v in os.environ.items():
@@ -13,11 +20,8 @@ def remove_slurm_vars():
 if __name__ == '__main__':
     remove_slurm_vars()
 
-    from pytorch_lightning import Trainer
-
     from config import Config, LRS2Config
     from data.lrs3 import LRSDataModule
-    from model.sign_translator import SignTranslator
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--lrs2", action="store_true", help="Use the LRS2 Dataset params")
@@ -27,8 +31,23 @@ if __name__ == '__main__':
     if args.lrs2:
         config = LRS2Config
     data = LRSDataModule(config)
-    model = SignTranslator(config)
+    data.setup()
+    model = SignTranslatorNoLightning(config)
+    train_loader = data.train_dataloader()
+    optim = model.configure_optimizers()
+    writer = SummaryWriter("runs")
 
-    trainer = Trainer(**config.trainer_params)
-    trainer.fit(model, data)
-    print(f"Counts {data.train_dataset.get_included_excluded_counts()}")
+    model = nn.DataParallel(model).to("cuda")
+    for epoch in range(config.num_epochs):
+        with tqdm(train_loader, unit="it") as tepoch:
+            for i, batch in enumerate(tepoch):
+                batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
+                optim.zero_grad()
+                loss = model.module.training_step(batch)
+                loss.backward()
+                optim.step()
+                writer.add_scalar("train_loss", loss.detach(), i)
+                tepoch.set_postfix(loss=loss.detach().item())
+        torch.save(model.state_dict(), f"model_{epoch}.pt")
+
+    writer.close()
