@@ -45,25 +45,32 @@ class GreedyDecoder(nn.Module):
         """
 
         :param encoder_output: Shape: time x batch x feature
-        :param lengths:
+        :param encoder_padding: padding of encoder
+        :param target_sequence: either None (teacher forcing prob = 0), or target_sequence
         :return: output_logits: shape out_length x batch x vocab_size
         """
         device = encoder_output.device
-        input_ids, attention_padding_normal = self.language_model.tokenize(target_sequence)
-        input_ids = input_ids.to(device)
-        attention_padding_normal = attention_padding_normal.to(device)
-        # input_ids shape: batch x sequence_len
-        attention_padding = ~attention_padding_normal.type(
-            torch.bool)  # pytorch uses reverse convention
-        tokens_embed = self.word_embedding(input_ids)  # batch x seq x embed
-        tokens_embed = tokens_embed.permute(1, 0, 2)  # seq x batch x embed
+        batch_size = encoder_output.shape[1]
+
+        if target_sequence is None or np.random.rand() > self.config.teacher_forcing_probability:
+            teacher_forcing = False
+            max_target_len = self.config.max_decode_len
+            input_ids, attention_padding_normal, attention_padding, tokens_embed = None, None, None, None
+        else:
+            teacher_forcing = True
+            input_ids, attention_padding_normal = self.language_model.tokenize(target_sequence)
+            input_ids = input_ids.to(device)
+            attention_padding_normal = attention_padding_normal.to(device)
+            # input_ids shape: batch x sequence_len
+            attention_padding = ~attention_padding_normal.type(
+                torch.bool)  # pytorch uses reverse convention
+            tokens_embed = self.word_embedding(input_ids)  # batch x seq x embed
+            tokens_embed = tokens_embed.permute(1, 0, 2)  # seq x batch x embed
+            max_target_len = input_ids.shape[1]
 
         # target mask: prevent decoder from looking into future
-        batch_size, max_target_len = input_ids.shape
         # upper because diagonals and future to be masked off
-        tgt_mask = torch.triu(
-            torch.ones(max_target_len, max_target_len)).type(torch.bool)
-        tgt_mask[0, 0] = False  # first word attends to first token otherwise output all nan
+        tgt_mask = ~torch.tril(torch.ones(max_target_len, max_target_len)).bool()
         tgt_mask = tgt_mask.to(device)
         # transformer_decoder wants batch second
 
@@ -76,8 +83,6 @@ class GreedyDecoder(nn.Module):
 
         # setup first word (SOS token)
         built_seq[0, :, :self.word_embed_dim] = tokens_embed[0, :, :]
-        # teacher forcing sometimes
-        teacher_forcing = np.random.rand() < self.config.teacher_forcing_probability
 
         memory_converted = self.enc_to_dec_bridge(encoder_output)
         lm_past = None
@@ -88,7 +93,7 @@ class GreedyDecoder(nn.Module):
             trans_out = self.transformer_decoder(tgt=decoder_input_pos,
                                                  memory=memory_converted,
                                                  tgt_mask=tgt_mask,
-                                                 tgt_key_padding_mask=attention_padding,
+                                                 tgt_key_padding_mask=attention_padding if teacher_forcing else None,
                                                  memory_key_padding_mask=encoder_padding)
             # trans_out shape: time x batch x embed  /TODO: not embed, but transformer_dim?
             decoded = self.dec_to_embed_bridge(trans_out[i])  #todo: confirm, shoudln't need non-i time values?

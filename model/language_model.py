@@ -14,6 +14,7 @@ attention)
 import os
 from typing import List, Tuple, Union
 
+import jiwer
 import torch
 from torch import nn
 from transformers import GPT2Tokenizer, GPT2Model
@@ -99,6 +100,30 @@ class LanguageModel(nn.Module):
         )
 
         return tokens["input_ids"], tokens["attention_mask"]
+
+    def get_wer(self, output_ids: torch.LongTensor, output_mask: torch.LongTensor, truth: torch.tensor):
+        """
+        Computes the Word Error Rate (WER) between the predicted tokens and the ground truth.
+        :param output_ids: (batch_size, max_seq_len) predicted tokens
+        :param output_mask: (batch_size, max_seq_len) 1 where output is relevant, 0 for ignore
+        :param truth: (batch_size, string) the correct output for each item
+        :return: wer list, average WER
+        """
+        transformation = jiwer.Compose([
+            jiwer.RemoveMultipleSpaces(),
+            jiwer.Strip(),
+            jiwer.SentencesToListOfWords(),
+            jiwer.RemoveEmptyStrings(),
+            jiwer.RemovePunctuation(),
+            jiwer.ToLowerCase(),
+            jiwer.RemoveKaldiNonWords()
+        ])
+        wers = []
+        for i, iids in enumerate(output_ids):
+            s = self.tokenizer.convert_tokens_to_string(
+                self.tokenizer.convert_ids_to_tokens(output_ids[i, output_mask[i].bool()]))
+            wers.append(jiwer.wer(truth[i], s, truth_transform=transformation, hypothesis_transform=transformation))
+        return wers, sum(wers) / len(wers)
 
     def token_embedding_layer(self) -> nn.Embedding:
         return self.model.wte

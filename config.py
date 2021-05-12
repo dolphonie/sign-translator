@@ -30,7 +30,7 @@ class Config(PrefixProto):
     val_kwargs = {}
     additional_train_kwargs = {}
 
-    batch_size = 4
+    batch_size = 2
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
 
@@ -39,7 +39,7 @@ class Config(PrefixProto):
     wrapper_func = iterable_wrapper
 
     trainer_params = {
-        "gpus": -1 if torch.cuda.is_available() else None,
+        "gpus": None,  # -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
         "limit_train_batches": 1000,
         "max_epochs": 1,
@@ -47,7 +47,9 @@ class Config(PrefixProto):
     # model params
     encoder_layers = 6
     decoder_layers = 6
-    teacher_forcing_probability = 0.8
+    beam_search_width = 3
+    max_decode_len = 30
+    teacher_forcing_probability = 0  # 0.8
     frame_embed_dim = 1
 
 

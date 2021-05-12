@@ -7,6 +7,8 @@ import pytorch_lightning as pl
 import torch
 from torch import nn, Tensor
 
+from model.decoders.beam_decoder import BeamDecoder
+from model.decoders.greedy_decoder import GreedyDecoder
 from model.decoder import Decoder
 from model.encoder import Encoder
 from model.pretrain_videocnn import get_pretrained_cnn, transform_frames_for_pretrain
@@ -18,7 +20,7 @@ class SignTranslator(pl.LightningModule):
         self.config = config
         self.video_encoder = get_pretrained_cnn()
         self.encoder = Encoder(config)
-        self.decoder = Decoder(config)
+        self.decoder = GreedyDecoder(config)
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, frames: Tensor, lengths: List[int], labels: List[str],
