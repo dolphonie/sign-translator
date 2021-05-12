@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 import pytorch_lightning as pl
 import torch
+from numpy import ndarray
 from torch import nn, Tensor
 from torch.autograd import profiler
 
@@ -35,7 +36,9 @@ class SignTranslator(pl.LightningModule):
         if labels_id is not None:
             labels = np.asarray(labels)
             labels = labels[labels_id.detach().cpu()]
-            labels = list(labels)
+            labels = list(labels) if isinstance(labels, ndarray) else [labels]
+            # remove nunpy dtype
+            labels = [str(label) for label in labels]
 
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
