@@ -45,23 +45,20 @@ class SignTranslator(pl.LightningModule):
         return output_logits, labels_tokenized
 
     def training_step(self, batch, batch_idx):
-        with profiler.profile(record_shapes=True) as prof:
-            with profiler.record_function("self.forward"):
-                frames, lengths, labels, labels_id = batch
-                frames_tr = transform_frames_for_pretrain(frames)
-                output_logits, labels_tokenized = self.forward(frames=frames_tr,
-                                                               lengths=lengths,
-                                                               labels=labels,
-                                                               labels_id=labels_id)
-                # no need to shift as in GPT2 objective, since each logit corresponds to the prediction
-                # for the corresponding word
-                logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
-                labels_contig = labels_tokenized.contiguous()
-                # Flatten the tokens
-                loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
-                self.log("train_loss", loss)
+        frames, lengths, labels, labels_id = batch
+        frames_tr = transform_frames_for_pretrain(frames)
+        output_logits, labels_tokenized = self.forward(frames=frames_tr,
+                                                       lengths=lengths,
+                                                       labels=labels,
+                                                       labels_id=labels_id)
+        # no need to shift as in GPT2 objective, since each logit corresponds to the prediction
+        # for the corresponding word
+        logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
+        labels_contig = labels_tokenized.contiguous()
+        # Flatten the tokens
+        loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
+        self.log("train_loss", loss)
 
-        print(prof.key_averages().table(sort_by="cpu_time_total", row_limit=20))
         return loss
 
     def configure_optimizers(self):

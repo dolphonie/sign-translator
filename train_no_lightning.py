@@ -60,7 +60,7 @@ if __name__ == '__main__':
                 logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
                 labels_contig = labels_tokenized.contiguous()
                 # Flatten the tokens
-                loss = model.loss_fn(logits_contig.view(-1, logits_contig.size(-1)),
+                loss = model.module.loss_fn(logits_contig.view(-1, logits_contig.size(-1)),
                                     labels_contig.view(-1))
                 loss.backward()
                 optim.step()
