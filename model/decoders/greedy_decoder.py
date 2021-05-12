@@ -115,4 +115,4 @@ class GreedyDecoder(nn.Module):
             built_seq[i, :, :self.word_embed_dim] = tokens_embed[i] if teacher_forcing else decoded
             built_seq[i, :, self.word_embed_dim:] = lm_features.permute(1, 0, 2)
 
-        return all_logits, input_ids
+        return all_logits, (input_ids if teacher_forcing else torch.argmax(all_logits, dim=2))
