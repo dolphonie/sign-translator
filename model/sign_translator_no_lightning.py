@@ -1,5 +1,5 @@
 # Created by Patrick Kao
-
+import datetime
 from typing import List
 
 import numpy as np
@@ -30,21 +30,27 @@ class SignTranslatorNoLightning(nn.Module):
         :param labels: length batch
         :return:
         """
+        start = datetime.datetime.now()
         if labels_id is not None:
             labels = np.asarray(labels)
             labels = labels[labels_id.detach().cpu()]
             labels = list(labels)
 
+        print(f"Labels elapsed: {datetime.datetime.now()-start}")
         frames = frames[:, :4]
         labels[0] = " ".join(labels[0].split(" ")[:2])
         labels[1] = " ".join(labels[1].split(" ")[:2])
 
+        start = datetime.datetime.now()
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
+        print(f"CNN elapsed {datetime.datetime.now()-start}")
+        start = datetime.datetime.now()
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
         output_logits, labels_tokenized = self.decoder(encoder_output=encoder_output,
                                                        encoder_padding=encoder_padding,
                                                        target_sequence=labels)
+        print(f"Encdec elapsed {datetime.datetime.now()-start}")
         return output_logits, labels_tokenized
 
     def training_step(self, batch):
