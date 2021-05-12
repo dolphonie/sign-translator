@@ -41,7 +41,7 @@ def get_frame_text(base_path, start_str, transform=None):
 
     frames = frames[0]  # discard audio
     with open(text_path, "r") as file:
-        raw_text = file.readlines()
+        raw_text = file.read().splitlines()
 
     text = None
     for line in raw_text:

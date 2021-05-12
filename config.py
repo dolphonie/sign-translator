@@ -30,7 +30,7 @@ class Config(PrefixProto):
     val_kwargs = {}
     additional_train_kwargs = {}
 
-    batch_size = 4
+    batch_size = 1
     serialize_dataset_path = "datasets.dill"
     lr = 1e-3
 
