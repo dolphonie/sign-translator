@@ -47,17 +47,21 @@ class GreedyDecoder(nn.Module):
         :param encoder_output: Shape: time x batch x feature
         :param encoder_padding: padding of encoder
         :param target_sequence: either None (teacher forcing prob = 0), or target_sequence
-        :return: output_logits: shape out_length x batch x vocab_size
+        :return:
+            output_logits: shape out_length x batch x vocab_size
+            output_mask: shape out_length x batch, 1 for important and 0 for disregard
+            labels_tokenized: tokenized target sequence shape batch x in_length, or None
+            labels_mask: shape batch x in_length, 1 for important and 0 for disregard
         """
         device = encoder_output.device
         batch_size = encoder_output.shape[1]
 
-        if target_sequence is None or np.random.rand() > self.config.teacher_forcing_probability:
+        if target_sequence is None:
             teacher_forcing = False
             max_target_len = self.config.max_decode_len
             input_ids, attention_padding_normal, attention_padding, tokens_embed = None, None, None, None
         else:
-            teacher_forcing = True
+            teacher_forcing = np.random.rand() < self.config.teacher_forcing_probability
             input_ids, attention_padding_normal = self.language_model.tokenize(target_sequence)
             input_ids = input_ids.to(device)
             attention_padding_normal = attention_padding_normal.to(device)
@@ -80,23 +84,30 @@ class GreedyDecoder(nn.Module):
         all_logits = torch.zeros(max_target_len, batch_size, embed_matrix.shape[0]).type_as(encoder_output)
         built_seq = torch.zeros(max_target_len, batch_size, self.transformer_dim)
         built_seq = built_seq.type_as(encoder_output)
+        decoded_mask = torch.zeros(max_target_len, batch_size)
 
         # setup first word (SOS token)
-        built_seq[0, :, :self.word_embed_dim] = tokens_embed[0, :, :]
+        start_token = torch.LongTensor([[self.language_model.tokenizer.eos_token_id]])
+        all_logits[0, :, start_token] = 1
+        built_seq[0, :, :self.word_embed_dim] = self.word_embedding(start_token)
+        decoded_mask[0, :] = 1
 
         memory_converted = self.enc_to_dec_bridge(encoder_output)
         lm_past = None
         lm_attention = None
         for i in range(1, max_target_len):
-            decoder_input_pos = self.pos_embed(built_seq)
+            decoder_input_pos = self.pos_embed(built_seq[:i])
             # TODO: even without pos_embeddings, trans_out[0] changes between runs, maybe dropout?
+            # TODO: I'm only passing the shortest necessary sequence to the decoder for now... unclear if this does
+            #       speed it up or actually make it worse LOL
             trans_out = self.transformer_decoder(tgt=decoder_input_pos,
                                                  memory=memory_converted,
-                                                 tgt_mask=tgt_mask,
-                                                 tgt_key_padding_mask=attention_padding if teacher_forcing else None,
+                                                 tgt_mask=tgt_mask[:i, :i],
+                                                 tgt_key_padding_mask=attention_padding[:,
+                                                                      :i] if teacher_forcing else decoded_mask[:i].T,
                                                  memory_key_padding_mask=encoder_padding)
             # trans_out shape: time x batch x embed  /TODO: not embed, but transformer_dim?
-            decoded = self.dec_to_embed_bridge(trans_out[i])  #todo: confirm, shoudln't need non-i time values?
+            decoded = self.dec_to_embed_bridge(trans_out[i-1])  # todo: confirm, shoudln't need non-i time values?
             # decoded shape: batch x embed
             # decoded_time = decoded[i]  # embedding of predicted output
 
@@ -113,6 +124,7 @@ class GreedyDecoder(nn.Module):
                 past_key_values=lm_past,
                 past_attention_mask=lm_attention)
             built_seq[i, :, :self.word_embed_dim] = tokens_embed[i] if teacher_forcing else decoded
-            built_seq[i, :, self.word_embed_dim:] = lm_features.permute(1, 0, 2)
+            built_seq[i, :, self.word_embed_dim:] = lm_features[:, 0]
+            decoded_mask[i] = torch.logical_and(greedy_attention.flatten(), decoded_mask[i - 1]).long()
 
-        return all_logits, (input_ids if teacher_forcing else torch.argmax(all_logits, dim=2))
+        return all_logits, decoded_mask, input_ids, attention_padding_normal

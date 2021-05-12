@@ -39,7 +39,7 @@ class Config(PrefixProto):
     wrapper_func = iterable_wrapper
 
     trainer_params = {
-        "gpus": None,  # -1 if torch.cuda.is_available() else None,
+        "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
         "limit_train_batches": 1000,
         "max_epochs": 1,
@@ -48,8 +48,8 @@ class Config(PrefixProto):
     encoder_layers = 6
     decoder_layers = 6
     beam_search_width = 3
-    max_decode_len = 30
-    teacher_forcing_probability = 0  # 0.8
+    max_decode_len = 45
+    teacher_forcing_probability = 0.8
     frame_embed_dim = 1
 
     visualize_freq = 10

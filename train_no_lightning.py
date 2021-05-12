@@ -2,8 +2,7 @@
 import argparse
 import os
 
-import jiwer
-from jiwer import wer
+import numpy as np
 import torch
 from torch import nn, Tensor
 from torch.utils.tensorboard import SummaryWriter
@@ -50,22 +49,15 @@ if __name__ == '__main__':
         model.train()
         with tqdm(train_loader, unit="it") as tepoch:
             for i, batch in enumerate(tepoch):
-                batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
+                # batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
                 optim.zero_grad()
                 frames, lengths, labels, labels_id = batch
                 frames_tr = transform_frames_for_pretrain(frames)
-                output_logits, labels_tokenized = model(frames=frames_tr,
+                output_logits, output_mask, labels_tokenized, labels_mask = model(frames=frames_tr,
                                                                lengths=lengths,
                                                                labels=labels,
                                                                labels_id=labels_id)
-                # no need to shift as in GPT2 objective, since each logit corresponds to the
-                # prediction
-                # for the corresponding word
-                logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
-                labels_contig = labels_tokenized.contiguous()
-                # Flatten the tokens
-                loss = model.module.loss_fn(logits_contig.view(-1, logits_contig.size(-1)),
-                                    labels_contig.view(-1))
+                loss = model.module.masked_loss(output_logits, labels_tokenized, labels_mask)
                 loss.backward()
                 optim.step()
                 writer.add_scalar("train_loss", loss.detach(), i)
@@ -75,25 +67,29 @@ if __name__ == '__main__':
         # Validation
         with tqdm(train_loader, unit="it") as vepoch:
             for i, batch in enumerate(vepoch):
-                batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
+                # batch = [el.to("cuda") if isinstance(el, Tensor) else el for el in batch]
                 frames, lengths, labels, labels_id = batch
                 frames_tr = transform_frames_for_pretrain(frames)
-                output_logits, labels_tokenized = model(frames=frames_tr,
+                output_logits, output_mask, _, _ = model(frames=frames_tr,
                                                         lengths=lengths,
-                                                        labels=labels,
-                                                        labels_id=labels_id)
+                                                        labels=None,
+                                                        labels_id=None)
+                if labels_id is not None:
+                    labels = np.asarray(labels)
+                    labels = labels[labels_id.detach().cpu()]
+                    labels = list(labels)
+                labels_tokenized, labels_mask = model.decoder.language_model.tokenize(labels)
                 # no need to shift as in GPT2 objective, since each logit corresponds to the
                 # prediction
                 # for the corresponding word
-                logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
-                labels_contig = labels_tokenized.contiguous()
-                # Flatten the tokens
-                loss = model.loss_fn(logits_contig.view(-1, logits_contig.size(-1)),
-                                            labels_contig.view(-1))
+                loss = model.module.masked_loss(output_logits, labels_tokenized, labels_mask)
+
                 writer.add_scalar("val_loss", loss.detach(), i)
                 vepoch.set_postfix(loss=loss.detach().item())
 
-                _, mean_wer = model.decoder.language_model.get_wer(labels_tokenized, labels)
+                greedy_ids = torch.argmax(output_logits, dim=2)
+                output_mask[0] = 0
+                _, mean_wer = model.module.decoder.language_model.get_wer(greedy_ids.T, output_mask.T, labels)
                 writer.add_scalar("val_wer", mean_wer, i)
 
         torch.save(model.state_dict(), f"model_{epoch}.pt")

@@ -65,7 +65,6 @@ class LRSLazyDataSet(Dataset):
         start = datetime.datetime.now()
         file_path = self.data_list[item]
         frames, text = get_frame_text(file_path, self.start_str, self.transform)
-        print(datetime.datetime.now()-start)
         return {"frames": frames, "text": text}
 
 

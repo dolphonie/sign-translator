@@ -8,7 +8,6 @@ import torch
 from torch import nn, Tensor
 from torch.autograd import profiler
 
-from model.decoders.beam_decoder import BeamDecoder
 from model.decoders.greedy_decoder import GreedyDecoder
 from model.decoder import Decoder
 from model.encoder import Encoder
@@ -41,26 +40,35 @@ class SignTranslator(pl.LightningModule):
         frame_embed = self.video_encoder(frames)  # batch x time x out_dim
         encoder_output, encoder_padding = self.encoder(frame_embeddings=frame_embed,
                                                        lengths=lengths)
-        output_logits, labels_tokenized = self.decoder(encoder_output=encoder_output,
-                                                       encoder_padding=encoder_padding,
-                                                       target_sequence=labels)
-        return output_logits, labels_tokenized
+        output_logits, output_mask, labels_tokenized, labels_mask = self.decoder(encoder_output=encoder_output,
+                                                                                 encoder_padding=encoder_padding,
+                                                                                 target_sequence=labels)
+        return output_logits, output_mask, labels_tokenized, labels_mask
 
     def training_step(self, batch, batch_idx):
         frames, lengths, labels, labels_id = batch
         frames_tr = transform_frames_for_pretrain(frames)
-        output_logits, labels_tokenized = self.forward(frames=frames_tr,
-                                                       lengths=lengths,
-                                                       labels=labels,
-                                                       labels_id=labels_id)
+        output_logits, output_mask, labels_tokenized, labels_mask = self.forward(frames=frames_tr,
+                                                                                 lengths=lengths,
+                                                                                 labels=labels,
+                                                                                 labels_id=labels_id)
+        loss = self.masked_loss(output_logits, labels_tokenized, labels_mask)
+        return loss
+
+    def masked_loss(self, output_logits, labels_tokenized, labels_mask):
+        # trim everything to min seq len
+        min_seq_len = min(output_logits.shape[0], labels_tokenized.shape[1])
+        output_logits = output_logits[:min_seq_len]
+        labels_tokenized = labels_tokenized[:, :min_seq_len]
+        labels_mask = labels_mask[:, :min_seq_len]
         # no need to shift as in GPT2 objective, since each logit corresponds to the prediction
         # for the corresponding word
-        logits_contig = output_logits.permute(1, 0, 2).contiguous()  # want batch first
-        labels_contig = labels_tokenized.contiguous()
+        # output_logits shape: (seq_len, batch, vocab)
+        logits_contig = output_logits.permute(1, 2, 0).contiguous()  # want (batch, vocab, seq_len)
+        labels_contig = labels_tokenized.contiguous()  # (batch, seq_len)
         # Flatten the tokens
-        loss = self.loss_fn(logits_contig.view(-1, logits_contig.size(-1)), labels_contig.view(-1))
-        self.log("train_loss", loss)
-
+        loss = self.loss_fn(logits_contig, labels_contig)  # (batch, seq_len)
+        loss = torch.mean(loss * labels_mask)
         return loss
 
     def configure_optimizers(self):

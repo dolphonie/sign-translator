@@ -87,6 +87,7 @@ class BeamDecoder(nn.Module):
         memory_converted = self.enc_to_dec_bridge(encoder_output)
         lm_past = None
         lm_attention = None
+        raise NotImplementedError("Beam search hasn't been implemented yet.")
         for i in range(1, max_target_len):
             decoder_input_pos = self.pos_embed(built_seq)
             # TODO: even without pos_embeddings, trans_out[0] changes between runs, maybe dropout?
