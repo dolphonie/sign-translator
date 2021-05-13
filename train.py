@@ -31,4 +31,4 @@ if __name__ == '__main__':
 
     trainer = Trainer(**config.trainer_params)
     trainer.fit(model, data)
-    print(f"Counts {data.train_dataset.get_included_excluded_counts()}")
+    trainer.test()
