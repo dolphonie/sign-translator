@@ -37,7 +37,7 @@ if __name__ == '__main__':
     trainer = Trainer(**config.trainer_params)
 
     # Invoke method
-    lr_finder = trainer.tuner.lr_find(model)
+    lr_finder = trainer.tuner.lr_find(model, datamodule=data)
 
     # Plot with
     fig = lr_finder.plot(suggest=True)
