@@ -17,6 +17,7 @@ class SignTranslator(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
+        self.lr = self.config.lr
         self.video_encoder = get_pretrained_cnn()
         self.encoder = Encoder(config)
         self.decoder = GreedyDecoder(config)
@@ -110,5 +111,5 @@ class SignTranslator(pl.LightningModule):
         self.log(f"{prefix}_wer", mean_wer)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), self.config.lr)
+        optimizer = torch.optim.Adam(self.parameters(), self.lr)
         return optimizer
