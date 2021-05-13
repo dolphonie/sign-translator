@@ -20,12 +20,12 @@ if __name__ == '__main__':
     from model.sign_translator import SignTranslator
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-l", "--lrs2", action="store_true", help="Use the LRS2 Dataset params")
+    parser.add_argument("-l", "--lrs3", action="store_true", help="Use the LRS3 Dataset params")
     args = parser.parse_args()
 
-    config = Config
-    if args.lrs2:
-        config = LRS2Config
+    config = LRS2Config
+    if args.lrs3:
+        config = Config
     data = LRSDataModule(config)
     model = SignTranslator(config)
 

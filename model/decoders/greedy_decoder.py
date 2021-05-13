@@ -86,7 +86,7 @@ class GreedyDecoder(nn.Module):
             encoder_output)
         built_seq = torch.zeros(max_target_len, batch_size, self.transformer_dim)
         built_seq = built_seq.type_as(encoder_output)
-        decoded_mask = torch.zeros(max_target_len, batch_size).to(device=device, dtype=torch.uint8)
+        decoded_mask = torch.zeros(max_target_len, batch_size).to(device=device, dtype=torch.bool)
 
         # setup first word (SOS token)
         start_token = torch.LongTensor([[self.language_model.tokenizer.eos_token_id]]).to(device)
@@ -108,7 +108,7 @@ class GreedyDecoder(nn.Module):
                                                  tgt_mask=tgt_mask[:i, :i],
                                                  tgt_key_padding_mask=attention_padding[:,
                                                                       :i] if teacher_forcing else
-                                                 decoded_mask[:i].T,
+                                                 ~decoded_mask[:i].T,
                                                  memory_key_padding_mask=encoder_padding)
             # trans_out shape: time x batch x embed  /TODO: not embed, but transformer_dim?
             decoded = self.dec_to_embed_bridge(
@@ -134,6 +134,6 @@ class GreedyDecoder(nn.Module):
             built_seq[i, :, :self.word_embed_dim] = tokens_embed[i] if teacher_forcing else decoded
             built_seq[i, :, self.word_embed_dim:] = lm_features[:, 0]
             decoded_mask[i] = torch.logical_and(greedy_attention.flatten(),
-                                                decoded_mask[i - 1]).byte()
+                                                decoded_mask[i - 1]).bool()
 
         return all_logits, decoded_mask, input_ids, attention_padding_normal
