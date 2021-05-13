@@ -1,7 +1,10 @@
 # Created by Patrick Kao
 import argparse
 import os
+import sys
 
+cur_file = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.join(cur_file, ".."))
 from pytorch_lightning.tuner.tuning import Tuner
 
 

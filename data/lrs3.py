@@ -62,7 +62,6 @@ class LRSLazyDataSet(Dataset):
         return len(self.data_list)
 
     def __getitem__(self, item):
-        start = datetime.datetime.now()
         file_path = self.data_list[item]
         frames, text = get_frame_text(file_path, self.start_str, self.transform)
         return {"frames": frames, "text": text}

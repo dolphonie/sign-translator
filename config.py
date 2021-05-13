@@ -37,12 +37,15 @@ class Config(PrefixProto):
     # data
     dataset_class = LRSLazyDataSet
     wrapper_func = iterable_wrapper
+    num_epochs = 5
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
-        "limit_train_batches": 1000,
-        "max_epochs": 1,
+        "limit_train_batches": 10,
+        "limit_val_batches": 10,
+        "limit_test_batches": 10,
+        "max_epochs": num_epochs,
     }
     # model params
     encoder_layers = 6
@@ -53,7 +56,6 @@ class Config(PrefixProto):
     frame_embed_dim = 1
 
     visualize_freq = 10
-    num_epochs = 5
 
 
 class LRS2Config(Config):
