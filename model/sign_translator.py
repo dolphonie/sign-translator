@@ -102,13 +102,14 @@ class SignTranslator(pl.LightningModule):
         # for the corresponding word
         loss = self.masked_loss(output_logits, labels_tokenized, labels_mask)
 
-        self.log(f"{prefix}_loss", loss.detach().item())
+        sync_dist = torch.cuda.device_count() > 1
+        self.log(f"{prefix}_loss", loss.detach().item(), sync_dist=sync_dist)
 
         greedy_ids = torch.argmax(output_logits, dim=2)
         output_mask[0] = 0
         _, mean_wer = self.decoder.language_model.get_wer(greedy_ids.T, output_mask.T,
                                                           labels)
-        self.log(f"{prefix}_wer", mean_wer)
+        self.log(f"{prefix}_wer", mean_wer, sync_dist=sync_dist)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), self.lr)
