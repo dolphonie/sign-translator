@@ -15,8 +15,8 @@ def no_wrapper(dataset):
     return dataset
 
 
-def iterable_wrapper(dataset):
-    return MaxLenWrapperIterable(dataset, max_len=120)
+def iterable_wrapper(dataset, **kwargs):
+    return MaxLenWrapperIterable(dataset, max_len=200, **kwargs)
 
 
 class Config(PrefixProto):
@@ -43,9 +43,6 @@ class Config(PrefixProto):
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
-        "limit_train_batches": 10,
-        "limit_val_batches": 10,
-        "limit_test_batches": 10,
         "max_epochs": num_epochs,
     }
     # model params

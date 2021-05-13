@@ -77,38 +77,38 @@ class LRSDataModule(LightningDataModule):
         data_dir = self.config.dataset_dir
 
         load_filename = self.config.serialize_dataset_path
-        if os.path.isfile(load_filename):
-            [self.train_dataset, self.val_dataset, self.test_dataset] = dill.load(
-                open(load_filename, 'rb'))
-        else:
-            print("Serializing data.")
-            start = datetime.datetime.now()
-            self.train_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.train_dir),
-                **self.config.train_kwargs)
-            self.val_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.val_dir),
-                **self.config.val_kwargs)
-            self.test_dataset = self.config.dataset_class(
-                dataset_directory=os.path.join(data_dir, self.config.test_dir),
-                **self.config.test_kwargs)
-            if self.config.additional_train_dir is not None:
-                add_dataset = self.config.dataset_class(
-                    dataset_directory=os.path.join(data_dir, self.config.additional_train_dir),
-                    **self.config.additional_train_kwargs)
-                self.train_dataset = ConcatDataset([self.train_dataset, add_dataset])
+        # if os.path.isfile(load_filename):
+        #     [self.train_dataset, self.val_dataset, self.test_dataset] = dill.load(
+        #         open(load_filename, 'rb'))
+        # else:
+        print("Crawling data.")
+        start = datetime.datetime.now()
+        self.train_dataset = self.config.dataset_class(
+            dataset_directory=os.path.join(data_dir, self.config.train_dir),
+            **self.config.train_kwargs)
+        self.val_dataset = self.config.dataset_class(
+            dataset_directory=os.path.join(data_dir, self.config.val_dir),
+            **self.config.val_kwargs)
+        self.test_dataset = self.config.dataset_class(
+            dataset_directory=os.path.join(data_dir, self.config.test_dir),
+            **self.config.test_kwargs)
+        if self.config.additional_train_dir is not None:
+            add_dataset = self.config.dataset_class(
+                dataset_directory=os.path.join(data_dir, self.config.additional_train_dir),
+                **self.config.additional_train_kwargs)
+            self.train_dataset = ConcatDataset([self.train_dataset, add_dataset])
 
-            # apply wrappers
-            self.train_dataset = self.config.wrapper_func(self.train_dataset)
-            self.val_dataset = self.config.wrapper_func(self.val_dataset)
-            self.test_dataset = self.config.wrapper_func(self.test_dataset)
+        # apply wrappers
+        self.train_dataset = self.config.wrapper_func(self.train_dataset, shuffle=True)
+        self.val_dataset = self.config.wrapper_func(self.val_dataset, shuffle=False)
+        self.test_dataset = self.config.wrapper_func(self.test_dataset, shuffle=False)
 
-            # TODO: save in way that tolerates changes to dataset class
-            Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
-            dill.dump([self.train_dataset, self.val_dataset,
-                       self.test_dataset],
-                      open(load_filename, mode='wb'))
-            print(f"Completed serialization in: {datetime.datetime.now() - start}")
+        # # TODO: save in way that tolerates changes to dataset class
+        # Path(load_filename).parent.mkdir(parents=True, exist_ok=True)
+        # dill.dump([self.train_dataset, self.val_dataset,
+        #            self.test_dataset],
+        #           open(load_filename, mode='wb'))
+        print(f"Completed crawling in: {datetime.datetime.now() - start}")
 
     def train_dataloader(self) -> Any:
         return DataLoader(self.train_dataset, batch_size=self.batch_size, collate_fn=collate_batch,

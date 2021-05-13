@@ -1,5 +1,5 @@
 # Created by Patrick Kao
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import Dataset, IterableDataset, SequentialSampler, RandomSampler
 
 
 class MaxLenWrapper(Dataset):
@@ -30,24 +30,22 @@ class MaxLenWrapper(Dataset):
 
 
 class MaxLenWrapperIterable(IterableDataset):
-    def __init__(self, dataset: Dataset, max_len: int):
+    def __init__(self, dataset: Dataset, max_len: int, shuffle: bool = False):
         self.dataset = dataset
         self.max_len = max_len
         self.include_count = 0
-        self.exclude_indices = set()
+        self.exclude_count = 0
+        self.sampler = RandomSampler(dataset) if shuffle else SequentialSampler(dataset)
 
     def __iter__(self):
-        for i in range(len(self.dataset)):
-            if i in self.exclude_indices:
-                continue
+        for item in self.sampler:
+            item = self.dataset[item]
+            size = item["frames"].shape[0]
+            if size <= self.max_len:
+                self.include_count += 1
+                yield item
             else:
-                item = self.dataset[i]
-                size = item["frames"].shape[0]
-                if size <= self.max_len:
-                    self.include_count += 1
-                    yield item
-                else:
-                    self.exclude_indices.add(i)
+                self.exclude_count += 1
 
     def get_included_excluded_counts(self):
-        return self.include_count, len(self.exclude_indices)
+        return self.include_count, self.exclude_count
