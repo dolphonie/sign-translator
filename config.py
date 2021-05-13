@@ -43,6 +43,8 @@ class Config(PrefixProto):
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
+        "val_check_interval": 25000,
+        "limit_val_batches": 3000,
         "max_epochs": num_epochs,
     }
     # model params

@@ -2,6 +2,8 @@
 import argparse
 import os
 
+from pytorch_lightning.callbacks import ModelCheckpoint
+
 
 def remove_slurm_vars():
     for k, v in os.environ.items():
@@ -29,6 +31,9 @@ if __name__ == '__main__':
     data = LRSDataModule(config)
     model = SignTranslator(config)
 
-    trainer = Trainer(**config.trainer_params)
+    checkpoint_callback = ModelCheckpoint(monitor='val_loss',
+                                          save_top_k=3,
+                                          mode='min')
+    trainer = Trainer(**config.trainer_params, callbacks=[checkpoint_callback])
     trainer.fit(model, data)
     trainer.test()
