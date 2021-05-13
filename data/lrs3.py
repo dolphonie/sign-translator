@@ -111,11 +111,13 @@ class LRSDataModule(LightningDataModule):
             print(f"Completed serialization in: {datetime.datetime.now() - start}")
 
     def train_dataloader(self) -> Any:
-        return DataLoader(self.train_dataset, batch_size=self.batch_size,
-                          collate_fn=collate_batch)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, collate_fn=collate_batch,
+                          num_workers=self.config.num_dataloader_workers)
 
     def val_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, collate_fn=collate_batch)
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, collate_fn=collate_batch,
+                          num_workers=self.config.num_dataloader_workers)
 
     def test_dataloader(self) -> Union[DataLoader, List[DataLoader]]:
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, collate_fn=collate_batch)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, collate_fn=collate_batch,
+                          num_workers=self.config.num_dataloader_workers)

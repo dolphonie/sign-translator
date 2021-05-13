@@ -38,6 +38,7 @@ class Config(PrefixProto):
     dataset_class = LRSLazyDataSet
     wrapper_func = iterable_wrapper
     num_epochs = 5
+    num_dataloader_workers = 4
 
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
