@@ -14,5 +14,6 @@ class LRSFileLazyDataset(LRSLazyDataSet):
         self.data_list = []
         with open(os.path.join(dataset_directory, "..", file_list), "r") as file:
             for line in file.read().splitlines():
-                self.data_list.append(os.path.join(dataset_directory, line))
+                # test set has "NF" or "MV" after line in file list, remove
+                self.data_list.append(os.path.join(dataset_directory, line.split(" ")[0]))
 

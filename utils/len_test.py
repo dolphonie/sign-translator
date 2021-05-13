@@ -7,5 +7,10 @@ dm.prepare_data()
 
 # splits/transforms
 dm.setup('fit')
-for batch in dm.train_dataloader():
-    print(batch[1])
+for i, batch in enumerate(dm.train_dataloader()):
+    if i > 200:
+        break
+
+counts = dm.train_dataset.get_included_excluded_counts()
+print(counts)
+print(counts[0]/counts[1])
