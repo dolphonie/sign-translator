@@ -1,8 +1,8 @@
 # Created by Patrick Kao
-from config import Config
+from config import Config, LRS2Config
 from data.lrs3 import LRSDataModule
 
-dm = LRSDataModule(Config)
+dm = LRSDataModule(LRS2Config)
 dm.prepare_data()
 
 # splits/transforms
