@@ -29,11 +29,13 @@ if __name__ == '__main__':
     if args.lrs3:
         config = Config
     data = LRSDataModule(config)
-    model = SignTranslator(config)
+    model = SignTranslator(config).load_from_checkpoint(
+        "lightning_logs/version_0/checkpoints/epoch=0-step=29999.ckpt", config=config)
 
     checkpoint_callback = ModelCheckpoint(monitor='val_loss',
-                                          save_top_k=3,
-                                          mode='min')
+                                          save_top_k=200,
+                                          mode='min',
+                                          save_last=True)
     trainer = Trainer(**config.trainer_params, callbacks=[checkpoint_callback])
     trainer.fit(model, data)
     trainer.test()

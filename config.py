@@ -30,9 +30,10 @@ class Config(PrefixProto):
     val_kwargs = {}
     additional_train_kwargs = {}
 
-    batch_size = 1
+    batch_size = 2
     serialize_dataset_path = "datasets.dill"
-    lr = 1.3182567385564076e-05
+    # lr = 1.3182567385564076e-05
+    lr = 1e-3
 
     # data
     dataset_class = LRSLazyDataSet
@@ -43,10 +44,11 @@ class Config(PrefixProto):
     trainer_params = {
         "gpus": -1 if torch.cuda.is_available() else None,
         "accelerator": "dp",
-        "val_check_interval": 25000,
-        "limit_val_batches": 3000,
+        "val_check_interval": 5000,
+        "limit_val_batches": 500,
         "max_epochs": num_epochs,
     }
+
     # model params
     encoder_layers = 6
     decoder_layers = 6
