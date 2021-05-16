@@ -32,8 +32,8 @@ class Config(PrefixProto):
 
     batch_size = 2
     serialize_dataset_path = "datasets.dill"
-    # lr = 1.3182567385564076e-05
-    lr = 1e-3
+    lr = 1.3182567385564076e-05
+    # lr = 1e-3
 
     # data
     dataset_class = LRSLazyDataSet
